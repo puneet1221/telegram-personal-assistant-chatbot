@@ -36,7 +36,8 @@ public class QuartzService {
 
             Date triggerTime = Date.from(
                     reminderTime.atZone(ZoneId.systemDefault()).toInstant());
-
+            
+                    
             Trigger trigger = TriggerBuilder.newTrigger()
                     .withIdentity("trigger-" + reminderId)
                     .startAt(triggerTime)
