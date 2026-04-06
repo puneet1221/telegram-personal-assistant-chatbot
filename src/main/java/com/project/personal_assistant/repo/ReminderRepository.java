@@ -8,4 +8,8 @@ import com.project.personal_assistant.model.Reminder;
 
 public interface ReminderRepository extends MongoRepository<Reminder, String> {
     List<Reminder> findByChatId(Long chatId);
+<<<<<<< HEAD
+=======
+    List<Reminder> findBySentFalse();
+>>>>>>> feature/quartz-persistent
 }

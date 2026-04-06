@@ -4,7 +4,8 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.bots.TelegramWebhookBot;
+import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -16,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
-public class PersonalAssistantBot extends TelegramLongPollingBot {
+public class PersonalAssistantBot extends TelegramWebhookBot {
 
     private final List<MessageHandler> handlers;
     private final GeminiService geminiService;
@@ -24,9 +25,13 @@ public class PersonalAssistantBot extends TelegramLongPollingBot {
     @Value("${telegram.bot.username}")
     private String botUsername;
 
+    @Value("${webhook.url}")
+    private String webhookUrl;
+
     public PersonalAssistantBot(
             List<MessageHandler> handlers,
-            @Value("${telegram.bot.token}") String botToken, GeminiService geminiService) {
+            GeminiService geminiService,
+            @Value("${telegram.bot.token}") String botToken) {
         super(botToken);
         this.handlers = handlers;
         this.geminiService = geminiService;
@@ -38,24 +43,30 @@ public class PersonalAssistantBot extends TelegramLongPollingBot {
     }
 
     @Override
-    public void onUpdateReceived(Update update) {
+    public String getBotPath() {
+        return webhookUrl + "/webhook";
+    }
+
+    @Override
+    public BotApiMethod<?> onWebhookUpdateReceived(Update update) {
         if (!update.hasMessage() || !update.getMessage().hasText())
-            return;
+            return null;
 
         String messageText = update.getMessage().getText().trim();
         long chatId = update.getMessage().getChatId();
 
         sendMessage(chatId, "Samajh raha hoon...");
 
-        // calling the list of handlers
         String response = handlers.stream()
                 .filter(h -> h.canHandle(messageText))
                 .findFirst()
                 .map(h -> h.handle(update, messageText))
                 .orElse("Kuch galat hua, dobara try karo!");
 
-        geminiService.clearCache(messageText); // cache clear karoO
+        geminiService.clearCache(messageText);
         sendMessage(chatId, response);
+
+        return null;
     }
 
     public void sendReminderMessage(long chatId, String text) {
