@@ -1,0 +1,37 @@
+package com.project.personal_assistant.service;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import com.project.personal_assistant.model.Reminder;
+import com.project.personal_assistant.repo.ReminderRepository;
+
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+public class ReminderService {
+
+    private final ReminderRepository reminderRepository;
+
+    public Reminder addReminder(Long chatId, String message, LocalDateTime time) {
+        Reminder reminder = new Reminder();
+        reminder.setChatId(chatId);
+        reminder.setMessage(message);
+        reminder.setReminderTime(time);
+        return reminderRepository.save(reminder);
+    }
+
+    public List<Reminder> getAllReminders(Long chatId) {
+        return reminderRepository.findByChatId(chatId);
+    }
+
+    public void markSentById(String id) {
+        reminderRepository.findById(id).ifPresent(reminder -> {
+            reminder.setSent(true);
+            reminderRepository.save(reminder);
+        });
+    }
+}
