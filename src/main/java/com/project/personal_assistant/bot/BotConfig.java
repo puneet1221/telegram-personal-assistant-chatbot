@@ -30,8 +30,8 @@ public class BotConfig {
     @Bean
     public TelegramBotsApi telegramBotsApi(PersonalAssistantBot bot) throws TelegramApiException {
         SetWebhook webhook = SetWebhook.builder()
-                .url(webhookUrl + "/webhook")
-                .build();
+            .url(webhookUrl + "/webhook")
+            .build();
         TelegramBotsApi api = new TelegramBotsApi(DefaultBotSession.class);
         try {
             api.registerBot(bot, webhook);
@@ -45,16 +45,17 @@ public class BotConfig {
     public void setWebhook() {
         try {
             String url = "https://api.telegram.org/bot" + botToken +
-                    "/setWebhook?url=" + webhookUrl + "/webhook";
+                         "/setWebhook?url=" + webhookUrl + "/webhook";
 
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .GET()
-                    .build();
+                .uri(URI.create(url))
+                .GET()
+                .build();
 
             HttpResponse<String> response = client.send(
-                    request, HttpResponse.BodyHandlers.ofString());
+                request, HttpResponse.BodyHandlers.ofString()
+            );
             log.info("Webhook set response: {}", response.body());
 
         } catch (Exception e) {
