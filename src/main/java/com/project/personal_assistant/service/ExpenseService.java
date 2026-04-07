@@ -30,4 +30,25 @@ public class ExpenseService {
     public void deleteExpense(String id) {
         expenseRepository.deleteById(id);
     }
+
+    public boolean deleteExpenseByIndex(int index) {
+        List<Expense> expenses = expenseRepository.findAll();
+        if (index < 0 || index > expenses.size())
+            return false;
+        expenseRepository.deleteById(expenses.get(index).getId());
+        return true;
+    }
+
+    public boolean editExpensesByIndex(int index, Double amount, String category, String description) {
+        List<Expense> expenses = expenseRepository.findAll();
+        if (index < 0 || index > expenses.size())
+            return false;
+        Expense expense = expenses.get(index);
+        expense.setAmount(amount);
+        expense.setCategory(category);
+        expense.setDescription(description);
+        expenseRepository.save(expense);
+        return true;
+
+    }
 }

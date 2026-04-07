@@ -5,14 +5,17 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Component
-@Order(6)
+@Order(8)
 @RequiredArgsConstructor
 public class UnknownHandler implements MessageHandler {
 
     @Override
     public boolean canHandle(String messageText) {
+        log.debug("unknown handler invoked");
         return true;
     }
 

@@ -15,7 +15,7 @@ import com.project.personal_assistant.service.ReminderService;
 import lombok.RequiredArgsConstructor;
 
 @Component
-@Order(5)
+@Order(7)
 @RequiredArgsConstructor
 public class ReminderHandler implements MessageHandler {
 
@@ -25,6 +25,11 @@ public class ReminderHandler implements MessageHandler {
 
     @Override
     public boolean canHandle(String messageText) {
+        if (messageText.toLowerCase().startsWith("delete") ||
+        messageText.toLowerCase().startsWith("edit") ||
+        messageText.toLowerCase().startsWith("/")) {
+        return false;
+    }
         JsonObject parsed = geminiService.parseUserMessage(messageText);
         return "reminder".equals(parsed.get("type").getAsString());
     }

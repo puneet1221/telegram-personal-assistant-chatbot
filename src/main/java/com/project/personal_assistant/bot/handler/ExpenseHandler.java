@@ -12,7 +12,7 @@ import com.project.personal_assistant.service.GeminiService;
 import lombok.RequiredArgsConstructor;
 
 @Component
-@Order(4)
+@Order(6)
 @RequiredArgsConstructor
 public class ExpenseHandler implements MessageHandler {
 
@@ -21,6 +21,12 @@ public class ExpenseHandler implements MessageHandler {
 
     @Override
     public boolean canHandle(String messageText) {
+       if (messageText.toLowerCase().startsWith("delete") ||
+        messageText.toLowerCase().startsWith("edit") ||
+        messageText.toLowerCase().startsWith("/")) {
+        return false;
+    }
+
         JsonObject parsed = geminiService.parseUserMessage(messageText);
         return "expense".equals(parsed.get("type").getAsString());
     }
