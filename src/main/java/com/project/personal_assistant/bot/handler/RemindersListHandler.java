@@ -4,6 +4,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import com.project.personal_assistant.model.Reminder;
 import com.project.personal_assistant.service.ReminderService;
 
 import lombok.RequiredArgsConstructor;
@@ -28,12 +29,20 @@ public class RemindersListHandler implements MessageHandler {
             return "Koi reminder nahi abhi tak!";
 
         StringBuilder sb = new StringBuilder("Tere reminders:\n\n");
-        for (var reminder : reminders) {
-            sb.append("⏰ ").append(reminder.getReminderTime())
+        for (int i = 0; i < reminders.size(); i++) {
+            Reminder reminder = reminders.get(i);
+
+            sb.append("" + (i + 1) + "  .").append("⏰ ").append(reminder.getReminderTime())
                     .append(" — ").append(reminder.getMessage())
                     .append(reminder.isSent() ? " (sent)" : " (pending)")
                     .append("\n");
         }
+        sb.append("\nTo delete a specific reminder:\n\n" +
+                " delete reminder <seq_no>\n" +
+                "To delete all past reminders use:\n\n" +
+                " delete past reminder"
+
+        );
         return sb.toString();
     }
 }

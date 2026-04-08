@@ -28,6 +28,26 @@ public class ReminderService {
         return reminderRepository.findByChatId(chatId);
     }
 
+    public String deleteByIndex(int index) {
+        List<Reminder> reminders = reminderRepository.findAll();
+        if (index < 0 || index >= reminders.size()) {
+            return "Please enter a valid reminder number";
+        }
+        reminderRepository.deleteById(reminders.get(index).getId());
+        return "Reminder deleted successfully. use /reminders to get list";
+    }
+
+    public String deleteAllPastReminders() {
+        LocalDateTime now = LocalDateTime.now();
+        List<Reminder> pastReminders = reminderRepository.findAll()
+                .stream()
+                .filter(r -> (r.isSent() || r.getReminderTime().isBefore(now)))
+                .toList();
+
+        reminderRepository.deleteAll(pastReminders);
+        return "All Past reminders cleared!. use /reminder to get List of reminders";
+    }
+
     public void markSentById(String id) {
         reminderRepository.findById(id).ifPresent(reminder -> {
             reminder.setSent(true);
