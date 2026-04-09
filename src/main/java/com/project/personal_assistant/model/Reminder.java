@@ -11,5 +11,11 @@ public class Reminder{
  private Long chatId;
  private String message;
  private LocalDateTime reminderTime;
- private boolean sent=false; 
+ private boolean sent=false;
+ 
+ private boolean recurring=false;
+ private String frequency;
+ private String dayOfWeek;
+ private String timeOfDay;
+ private String cronExpression;
 }

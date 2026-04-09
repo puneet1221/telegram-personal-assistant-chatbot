@@ -33,21 +33,32 @@ public class GeminiService {
             Tu ek personal assistant hai. User ka message parse karke SIRF JSON return kar.
             Koi extra text nahi, sirf JSON.
 
-            Agar expense hai toh:
+            Agar normal expense hai toh:
             {"type": "expense", "amount": 500, "category": "food", "description": "lunch"}
 
-            Agar reminder hai toh:
+            Agar normal reminder hai toh:
             {"type": "reminder", "datetime": "2026-04-02T08:00:00", "message": "gym jaana hai"}
+
+            Agar recurring reminder hai toh:
+            Daily: {"type": "recurring_reminder", "frequency": "daily", "time": "07:00", "message": "gym jaana hai"}
+            Weekly: {"type": "recurring_reminder", "frequency": "weekly", "day": "MONDAY", "time": "09:00", "message": "meeting hai"}
 
             Agar kuch aur hai toh:
             {"type": "unknown", "reply": "yahan reply likho"}
 
-            Categories: food, transport, shopping, health, entertainment, other
+            Categories expense ke liye: food, transport, shopping, health, entertainment, other
+
             Datetime hamesha ISO format mein: yyyy-MM-ddTHH:mm:ss
             Agar "kal" likha hai toh agle din ki date lagao.
             Agar "subah" likha hai toh 08:00, "dopahar" toh 13:00, "shaam" toh 18:00, "raat" toh 21:00.
-            Aaj ki date: """ + java.time.LocalDate.now() + """
-            """;
+
+            Day of week hamesha uppercase English mein: MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY
+
+            Recurring reminder keywords: "har din", "daily", "har hafte", "weekly", "har Monday" etc.
+
+            Aaj ki date: """
+            + java.time.LocalDate.now() + """
+                    """;
 
     public JsonObject parseUserMessage(String userMessage) {
         return cache.computeIfAbsent(userMessage, this::callGeminiAndParse);
