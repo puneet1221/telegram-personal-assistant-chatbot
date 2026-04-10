@@ -43,6 +43,10 @@ public class GeminiService {
             Daily: {"type": "recurring_reminder", "frequency": "daily", "time": "07:00", "message": "gym jaana hai"}
             Weekly: {"type": "recurring_reminder", "frequency": "weekly", "day": "MONDAY", "time": "09:00", "message": "meeting hai"}
 
+            Agar koi habit  user ne complete kiya h hai toh:
+            {"type":habit_done,"habit":gym}
+
+    
             Agar kuch aur hai toh:
             {"type": "unknown", "reply": "yahan reply likho"}
 

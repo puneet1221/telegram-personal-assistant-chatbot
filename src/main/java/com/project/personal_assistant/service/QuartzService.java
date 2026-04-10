@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 
+import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
 import org.quartz.Scheduler;
@@ -36,8 +37,7 @@ public class QuartzService {
 
             Date triggerTime = Date.from(
                     reminderTime.atZone(ZoneId.systemDefault()).toInstant());
-            
-                    
+
             Trigger trigger = TriggerBuilder.newTrigger()
                     .withIdentity("trigger-" + reminderId)
                     .startAt(triggerTime)
@@ -48,6 +48,30 @@ public class QuartzService {
 
         } catch (SchedulerException e) {
             log.error("Reminder schedule nahi hua: ", e);
+        }
+    }
+
+    public void scheduleRecurringReminder(String reminderId, Long chatId,
+            String message, String cronExpression) {
+        try {
+            JobDetail job = JobBuilder.newJob(ReminderJob.class)
+                    .withIdentity("recurring-" + reminderId)
+                    .usingJobData("reminderId", reminderId)
+                    .usingJobData("chatId", chatId)
+                    .usingJobData("message", message)
+                    .usingJobData("recurring", true)
+                    .build();
+
+            Trigger trigger = TriggerBuilder.newTrigger()
+                    .withIdentity("recurring-trigger-" + reminderId)
+                    .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
+                    .build();
+
+            scheduler.scheduleJob(job, trigger);
+            log.info("Recurring reminder scheduled: {} with cron: {}", message, cronExpression);
+
+        } catch (SchedulerException e) {
+            log.error("Recurring reminder schedule nahi hua: ", e);
         }
     }
 }
