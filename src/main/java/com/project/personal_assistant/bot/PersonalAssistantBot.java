@@ -12,13 +12,14 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import com.project.personal_assistant.bot.handler.MessageHandler;
 import com.project.personal_assistant.service.GeminiService;
+import com.project.personal_assistant.service.UserService;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
 public class PersonalAssistantBot extends TelegramWebhookBot {
-
+    private final UserService userService;
     private final List<MessageHandler> handlers;
     private final GeminiService geminiService;
 
@@ -31,10 +32,11 @@ public class PersonalAssistantBot extends TelegramWebhookBot {
     public PersonalAssistantBot(
             List<MessageHandler> handlers,
             GeminiService geminiService,
-            @Value("${telegram.bot.token}") String botToken) {
+            @Value("${telegram.bot.token}") String botToken, UserService userService) {
         super(botToken);
         this.handlers = handlers;
         this.geminiService = geminiService;
+        this.userService = userService;
     }
 
     @Override
@@ -54,6 +56,9 @@ public class PersonalAssistantBot extends TelegramWebhookBot {
 
         String messageText = update.getMessage().getText().trim();
         long chatId = update.getMessage().getChatId();
+
+        // User register karo — pehli baar aaya toh save karo
+        userService.registerUser(chatId);
 
         sendMessage(chatId, "Samajh raha hoon...");
 

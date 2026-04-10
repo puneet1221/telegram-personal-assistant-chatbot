@@ -1,5 +1,8 @@
 package com.project.personal_assistant.service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -50,5 +53,11 @@ public class ExpenseService {
         expenseRepository.save(expense);
         return true;
 
+    }
+
+    public List<Expense> getTodayExpenses(Long chatId) {
+        LocalDateTime startOfDay = LocalDateTime.of(LocalDate.now(), LocalTime.MIDNIGHT);
+        LocalDateTime endOfDay = LocalDateTime.of(LocalDate.now(), LocalTime.MAX);
+        return expenseRepository.findByChatIdAndDateBetween(chatId, startOfDay, endOfDay);
     }
 }

@@ -3,16 +3,19 @@ package com.project.personal_assistant.service;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.TimeZone;
 
 import org.quartz.CronScheduleBuilder;
 import org.quartz.JobBuilder;
 import org.quartz.JobDetail;
+import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.springframework.stereotype.Service;
 
+import com.project.personal_assistant.bot.DailySummaryJob;
 import com.project.personal_assistant.bot.ReminderJob;
 
 import lombok.RequiredArgsConstructor;
@@ -72,6 +75,29 @@ public class QuartzService {
 
         } catch (SchedulerException e) {
             log.error("Recurring reminder schedule nahi hua: ", e);
+        }
+    }
+
+    public void scheduleDailySummary() {
+        try {
+            JobDetail job = JobBuilder.newJob(DailySummaryJob.class)
+                    .withIdentity("daily-summary-job")
+                    .build();
+
+            Trigger trigger = TriggerBuilder.newTrigger()
+                    .withIdentity("daily-summary-trigger")
+                    .withSchedule(CronScheduleBuilder
+                            .cronSchedule("0 0 22 * * ?")
+                            .inTimeZone(TimeZone.getTimeZone("Asia/Kolkata")))
+                    .build();
+
+            if (!scheduler.checkExists(new JobKey("daily-summary-job"))) {
+                scheduler.scheduleJob(job, trigger);
+                log.info("Daily summary scheduled at 10 PM IST");
+            }
+
+        } catch (SchedulerException e) {
+            log.error("Daily summary schedule nahi hua: ", e);
         }
     }
 }

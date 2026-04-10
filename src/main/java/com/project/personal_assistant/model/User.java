@@ -6,11 +6,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import lombok.Data;
 
 @Data
-@Document(collection = "habits")
-public class Habit {
+@Document(collection = "users")
+public class User {
     @Id
     private String id;
     private Long chatId;
-    private String name;
-    private boolean active = true;
 }

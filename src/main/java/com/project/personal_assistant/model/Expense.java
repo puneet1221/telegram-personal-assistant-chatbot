@@ -12,6 +12,7 @@ import lombok.Data;
 public class Expense {
     @Id
     private String id;
+    private Long chatId;
     private String category;
     private Double amount;
     private String description;

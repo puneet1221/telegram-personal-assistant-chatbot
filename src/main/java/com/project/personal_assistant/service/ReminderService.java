@@ -54,4 +54,10 @@ public class ReminderService {
             reminderRepository.save(reminder);
         });
     }
+
+    public List<Reminder> getRemindersBetween(Long chatId, LocalDateTime start, LocalDateTime end) {
+    return reminderRepository.findByChatIdAndReminderTimeBetweenAndSentFalse(
+        chatId, start, end
+    );
+}
 }
