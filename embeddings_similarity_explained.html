@@ -1,0 +1,211 @@
+<html>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  #canvas { width: 100%; display: block; border: 0.5px solid var(--color-border-tertiary); border-radius: 8px; background: var(--color-background-secondary); }
+  .controls { padding: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .control-group { display: flex; align-items: center; gap: 8px; }
+  label { font-size: 13px; color: var(--color-text-secondary); font-weight: 500; }
+  input[type="range"] { width: 120px; }
+  button { padding: 8px 16px; border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); color: var(--color-text-primary); border-radius: 6px; cursor: pointer; font-size: 13px; }
+  button:hover { background: var(--color-background-secondary); }
+  .legend { padding: 12px 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; font-size: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+  #stats { padding: 12px 16px; background: var(--color-background-secondary); border-radius: 6px; font-size: 12px; color: var(--color-text-secondary); margin-top: 8px; }
+  .stat-row { display: flex; justify-content: space-between; margin: 4px 0; }
+</style>
+
+<div class="controls">
+  <div class="control-group">
+    <label>Similarity threshold:</label>
+    <input type="range" id="threshold" min="0.3" max="0.95" step="0.05" value="0.7">
+    <span id="thresholdVal" style="font-weight: 500; min-width: 30px;">0.70</span>
+  </div>
+  <button onclick="resetView()">Reset view</button>
+</div>
+
+<canvas id="canvas" width="680" height="500"></canvas>
+
+<div class="legend">
+  <div class="legend-item">
+    <div class="legend-dot" style="background: #E85A30;"></div>
+    <span>User question</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-dot" style="background: #0F6E56;"></div>
+    <span>Relevant chunks</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-dot" style="background: #3B8BD4;"></div>
+    <span>Less relevant</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-dot" style="background: #888780;"></div>
+    <span>Unrelated</span>
+  </div>
+</div>
+
+<div id="stats">
+  <div class="stat-row">
+    <span>Selected chunks:</span>
+    <strong id="selectedCount">3</strong>
+  </div>
+  <div class="stat-row">
+    <span>Average relevance:</span>
+    <strong id="avgSimilarity">0.89</strong>
+  </div>
+  <div class="stat-row">
+    <span>Encoding dimension:</span>
+    <strong>1536 (Claude embeddings)</strong>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const thresholdInput = document.getElementById('threshold');
+const thresholdVal = document.getElementById('thresholdVal');
+const selectedCountEl = document.getElementById('selectedCount');
+const avgSimilarityEl = document.getElementById('avgSimilarity');
+
+// Simulate embedding space (2D projection of actual 1536D space)
+const chunks = [
+  { x: 150, y: 120, label: "Return policy\n30 days", similarity: 0.94, color: '#0F6E56' },
+  { x: 180, y: 160, label: "Returns &\nrefunds", similarity: 0.91, color: '#0F6E56' },
+  { x: 280, y: 100, label: "Shipping\npolicy", similarity: 0.52, color: '#3B8BD4' },
+  { x: 400, y: 200, label: "Privacy\npolicy", similarity: 0.31, color: '#888780' },
+  { x: 520, y: 150, label: "Product\nwarranty", similarity: 0.28, color: '#888780' },
+  { x: 450, y: 380, label: "Payment\nmethods", similarity: 0.22, color: '#888780' },
+  { x: 100, y: 350, label: "Contact\ninfo", similarity: 0.18, color: '#888780' },
+  { x: 350, y: 420, label: "FAQ", similarity: 0.15, color: '#888780' }
+];
+
+const question = { x: 200, y: 200, label: "How long\nfor returns?", color: '#E85A30' };
+
+function drawScene(threshold) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // Draw grid
+  ctx.strokeStyle = 'var(--color-border-tertiary)';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i < canvas.width; i += 50) {
+    ctx.beginPath();
+    ctx.moveTo(i, 0);
+    ctx.lineTo(i, canvas.height);
+    ctx.stroke();
+  }
+  for (let i = 0; i < canvas.height; i += 50) {
+    ctx.beginPath();
+    ctx.moveTo(0, i);
+    ctx.lineTo(canvas.width, i);
+    ctx.stroke();
+  }
+  
+  // Draw threshold circle (visual reference)
+  ctx.strokeStyle = 'rgba(255, 159, 39, 0.15)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  
+  const radiusPercent = (threshold - 0.3) / 0.65 * 150;
+  ctx.beginPath();
+  ctx.arc(question.x, question.y, radiusPercent, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  
+  // Draw chunks
+  let selectedCount = 0;
+  let totalSim = 0;
+  
+  chunks.forEach((chunk, idx) => {
+    const isSelected = chunk.similarity >= threshold;
+    if (isSelected) {
+      selectedCount++;
+      totalSim += chunk.similarity;
+    }
+    
+    // Draw chunk circle
+    const radius = isSelected ? 16 : 12;
+    ctx.fillStyle = chunk.color;
+    ctx.beginPath();
+    ctx.arc(chunk.x, chunk.y, radius, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Draw border for selected
+    if (isSelected) {
+      ctx.strokeStyle = chunk.color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(chunk.x, chunk.y, radius + 3, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    
+    // Draw label
+    ctx.fillStyle = 'var(--color-text-primary)';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const lines = chunk.label.split('\n');
+    lines.forEach((line, i) => {
+      ctx.fillText(line, chunk.x, chunk.y + 28 + i * 12);
+    });
+    
+    // Draw similarity line if selected
+    if (isSelected) {
+      ctx.strokeStyle = 'rgba(15, 110, 86, 0.2)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 2]);
+      ctx.beginPath();
+      ctx.moveTo(question.x, question.y);
+      ctx.lineTo(chunk.x, chunk.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  });
+  
+  // Draw question (larger, on top)
+  ctx.fillStyle = question.color;
+  ctx.beginPath();
+  ctx.arc(question.x, question.y, 20, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = question.color;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.arc(question.x, question.y, 23, 0, Math.PI * 2);
+  ctx.stroke();
+  
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 10px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const lines = question.label.split('\n');
+  lines.forEach((line, i) => {
+    ctx.fillText(line, question.x, question.y + i * 11 - 5);
+  });
+  
+  // Update stats
+  const avgSim = selectedCount > 0 ? (totalSim / selectedCount).toFixed(2) : '0.00';
+  selectedCountEl.textContent = selectedCount;
+  avgSimilarityEl.textContent = avgSim;
+}
+
+function resetView() {
+  thresholdInput.value = 0.7;
+  updateThreshold();
+}
+
+function updateThreshold() {
+  const val = parseFloat(thresholdInput.value);
+  thresholdVal.textContent = val.toFixed(2);
+  drawScene(val);
+}
+
+thresholdInput.addEventListener('input', updateThreshold);
+
+// Initial draw
+drawScene(0.7);
+</script>
+
+<p style="font-size: 13px; color: var(--color-text-secondary); padding: 16px; margin: 0; background: var(--color-background-secondary); border-radius: 6px; margin-top: 12px;">
+  <strong>How to read this:</strong> The orange dot is your question ("How long for returns?"). Each colored dot is a document chunk. The dotted circle shows the similarity threshold — chunks inside it are selected for the LLM. Adjust the slider to see how changing the threshold affects which chunks are used. Higher threshold = only most relevant chunks. Lower threshold = more chunks, but some may be less relevant.
+</p>
+</html>

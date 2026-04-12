@@ -34,5 +34,6 @@ build/
 .vscode/
 keys.txt
 info.md
+RAG_FOR_JAVA_DEVELOPERS.md
 
 
