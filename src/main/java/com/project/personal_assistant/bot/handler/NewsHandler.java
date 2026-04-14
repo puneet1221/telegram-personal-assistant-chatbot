@@ -17,7 +17,7 @@ public class NewsHandler implements MessageHandler {
     private final NewsService newsService;
 
     @Override
-    public boolean canHandle(String messageText) {
+    public boolean canHandle(String messageText,Long chatId) {
         log.info(messageText + " handled by News Handler");
         return messageText.trim().toLowerCase().contains("/news");
     }

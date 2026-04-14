@@ -17,7 +17,7 @@ public class ExpensesListHandler implements MessageHandler {
     private final ExpenseService expenseService;
 
     @Override
-    public boolean canHandle(String messageText) {
+    public boolean canHandle(String messageText,Long chatId) {
         return messageText.startsWith("/expenses");
     }
 

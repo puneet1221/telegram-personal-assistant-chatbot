@@ -18,7 +18,7 @@ public class ExpenseEditHandler implements MessageHandler {
     private ExpenseService expenseService;
 
     @Override
-    public boolean canHandle(String messageText) {
+    public boolean canHandle(String messageText,Long chatId) {
         return messageText.startsWith("edit expense");
     }
 

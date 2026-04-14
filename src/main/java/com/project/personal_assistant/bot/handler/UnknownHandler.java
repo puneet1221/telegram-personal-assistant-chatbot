@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 public class UnknownHandler implements MessageHandler {
 
     @Override
-    public boolean canHandle(String messageText) {
+    public boolean canHandle(String messageText,Long chatId) {
         log.debug("unknown handler invoked");
         return true;
     }

@@ -17,7 +17,7 @@ public class DeleteReminder implements MessageHandler {
     private final ReminderService reminderService;
 
     @Override
-    public boolean canHandle(String messageText) {
+    public boolean canHandle(String messageText,Long chatId) {
         return(messageText.toLowerCase().startsWith("delete reminder") ||
             messageText.toLowerCase().startsWith("delete past reminder"));
     }

@@ -20,7 +20,7 @@ public class ExpenseDeleteHandler implements MessageHandler {
     private ExpenseService expenseService;
 
     @Override
-    public boolean canHandle(String messageText) {
+    public boolean canHandle(String messageText ,Long chatId) {
         log.debug("handled by Expense Delete Handler");
         return messageText.toLowerCase().startsWith("delete expense");
     }

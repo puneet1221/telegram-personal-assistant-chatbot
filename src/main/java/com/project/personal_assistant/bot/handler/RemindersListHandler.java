@@ -17,7 +17,7 @@ public class RemindersListHandler implements MessageHandler {
     private final ReminderService reminderService;
 
     @Override
-    public boolean canHandle(String messageText) {
+    public boolean canHandle(String messageText,Long chatId) {
         return messageText.startsWith("/reminders");
     }
 

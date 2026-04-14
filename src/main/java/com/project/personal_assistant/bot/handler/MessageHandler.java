@@ -3,7 +3,7 @@ package com.project.personal_assistant.bot.handler;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 public interface MessageHandler {
-    boolean canHandle(String messageText);
+    boolean canHandle(String messageText,Long chatId);
 
     String handle(Update update, String messageText);
 }

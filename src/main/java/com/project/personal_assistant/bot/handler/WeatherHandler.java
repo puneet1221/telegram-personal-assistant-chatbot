@@ -19,7 +19,7 @@ public class WeatherHandler implements MessageHandler {
     private WeatherService weatherService;
 
     @Override
-    public boolean canHandle(String messageText) {
+    public boolean canHandle(String messageText,Long chatId) {
         log.info("update handled by weather handler of order {}",6);
         return messageText.toLowerCase().startsWith("/weather");
         

@@ -33,7 +33,7 @@ build/
 ### VS Code ###
 .vscode/
 keys.txt
-info.md
+info*.md
 RAG_FOR_JAVA_DEVELOPERS.md
 
 

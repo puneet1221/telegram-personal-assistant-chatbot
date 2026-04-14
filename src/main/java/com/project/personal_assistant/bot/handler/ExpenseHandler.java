@@ -20,7 +20,7 @@ public class ExpenseHandler implements MessageHandler {
     private final GeminiService geminiService;
 
     @Override
-    public boolean canHandle(String messageText) {
+    public boolean canHandle(String messageText,Long chatId) {
        if (messageText.toLowerCase().startsWith("delete") ||
         messageText.toLowerCase().startsWith("edit") ||
         messageText.toLowerCase().startsWith("/")) {

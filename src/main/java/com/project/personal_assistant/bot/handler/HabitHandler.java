@@ -20,7 +20,7 @@ public class HabitHandler implements MessageHandler {
     private HabitService habitService;
 
     @Override
-    public boolean canHandle(String messageText) {
+    public boolean canHandle(String messageText,Long chatId) {
         log.info("{} handled by Habit Handler", messageText);
         return messageText.toLowerCase().contains("habit") 
                 || messageText.toLowerCase().startsWith("/today")

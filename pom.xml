@@ -112,7 +112,7 @@
 			<artifactId>tika-core</artifactId>
 			<version>2.9.1</version>
 		</dependency>
-		
+
 		<!-- Tika parsers for various file formats -->
 		<dependency>
 			<groupId>org.apache.tika</groupId>
@@ -161,17 +161,24 @@ Matlab: Agar tum ye <repository> block nahi daaloge, toh Maven sirf "General Sto
 						</exclude>
 					</excludes>
 					<!-- Fix Tika reflection access issue with Java modules -->
-					<arguments>
-						<argument>--add-opens</argument>
-						<argument>java.base/java.nio.charset=ALL-UNNAMED</argument>
-						<argument>--add-opens</argument>
-						<argument>java.base/java.lang=ALL-UNNAMED</argument>
-					</arguments>
+					<jvmArguments>--add-opens java.base/java.nio.charset=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED</jvmArguments>
 				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<!-- JVM arguments for module access during annotation processing -->
+					<fork>true</fork>
+					<compilerArgs>
+						<arg>--add-opens</arg>
+						<arg>java.base/java.nio.charset=ALL-UNNAMED</arg>
+						<arg>--add-opens</arg>
+						<arg>java.base/java.lang=ALL-UNNAMED</arg>
+						<arg>--add-opens</arg>
+						<arg>java.base/java.util=ALL-UNNAMED</arg>
+					</compilerArgs>
+				</configuration>
 				<executions>
 					<execution>
 						<id>default-compile</id>
@@ -204,6 +211,13 @@ Matlab: Agar tum ye <repository> block nahi daaloge, toh Maven sirf "General Sto
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<argLine>--add-opens java.base/java.nio.charset=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED</argLine>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
