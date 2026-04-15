@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -22,37 +23,41 @@ public class ExpenseService {
         return expenseRepository.save(expense);
     }
 
-    public List<Expense> getAllExpenses() {
-        return expenseRepository.findAll();
+    public List<Expense> getAllExpenses(Long chatId) {
+        return expenseRepository.findAllByChatId(chatId);
     }
 
-    public List<Expense> getByCategory(String category) {
-        return expenseRepository.findByCategory(category);
+    public List<Expense> getByCategoryAndChatId(String category, Long chatId) {
+        return expenseRepository.findByChatIdAndCategory(chatId, category);
     }
 
     public void deleteExpense(String id) {
         expenseRepository.deleteById(id);
     }
 
-    public boolean deleteExpenseByIndex(int index) {
-        List<Expense> expenses = expenseRepository.findAll();
-        if (index < 0 || index > expenses.size())
+    public boolean deleteExpenseByIndex(Long chatId, int index) {
+        List<String> expenseIds = expenseRepository.findAllIdsByChatId(chatId);
+        if (index < 0 || index >= expenseIds.size())
             return false;
-        expenseRepository.deleteById(expenses.get(index).getId());
+        expenseRepository.deleteById(expenseIds.get(index));
         return true;
     }
 
-    public boolean editExpensesByIndex(int index, Double amount, String category, String description) {
-        List<Expense> expenses = expenseRepository.findAll();
-        if (index < 0 || index > expenses.size())
+    public boolean editExpensesByIndex(int index, Double amount, String category, String description, Long chatId) {
+        List<String> expenseIds = expenseRepository.findAllIdsByChatId(chatId);
+        if (index < 0 || index >= expenseIds.size())
             return false;
-        Expense expense = expenses.get(index);
+        Optional<Expense> expenseOptional = expenseRepository.findById(expenseIds.get(index));
+        if (!expenseOptional.isPresent()) {
+            return false;
+        }
+        Expense expense = expenseOptional.get();
+        expense.setChatId(chatId);
         expense.setAmount(amount);
         expense.setCategory(category);
         expense.setDescription(description);
         expenseRepository.save(expense);
         return true;
-
     }
 
     public List<Expense> getTodayExpenses(Long chatId) {

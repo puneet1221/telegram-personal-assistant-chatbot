@@ -32,8 +32,6 @@ public class WeatherService {
                                         .GET()
                                         .build();
                         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-                        log.info(response.body());
                         JsonObject root = JsonParser.parseString(response.body()).getAsJsonObject();
                         if (root.get("cod").getAsInt() == 200) {
                                 String cityName = root.get("name").getAsString();

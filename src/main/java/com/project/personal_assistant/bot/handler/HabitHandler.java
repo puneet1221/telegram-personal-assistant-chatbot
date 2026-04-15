@@ -20,9 +20,9 @@ public class HabitHandler implements MessageHandler {
     private HabitService habitService;
 
     @Override
-    public boolean canHandle(String messageText,Long chatId) {
+    public boolean canHandle(String messageText, Long chatId) {
         log.info("{} handled by Habit Handler", messageText);
-        return messageText.toLowerCase().contains("habit") 
+        return messageText.toLowerCase().contains("habit")
                 || messageText.toLowerCase().startsWith("/today")
                 || messageText.toLowerCase().startsWith("/mark-habit-done");
     }
@@ -30,7 +30,7 @@ public class HabitHandler implements MessageHandler {
     @Override
     public String handle(Update update, String messageText) {
         try {
-            long chatId = update.getMessage().getChatId();
+            long chatId = update.getMessage().getFrom().getId();
             String lowerMessage = messageText.toLowerCase();
 
             if (messageText.startsWith("/add-habit")) {

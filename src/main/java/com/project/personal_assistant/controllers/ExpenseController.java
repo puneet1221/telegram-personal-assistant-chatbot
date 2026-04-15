@@ -27,14 +27,9 @@ public class ExpenseController {
         return expenseService.addExpense(expense);
     }
 
-    @GetMapping
-    public List<Expense> getAllExpenses() {
-        return expenseService.getAllExpenses();
-    }
-
-    @GetMapping("/category/{category}")
-    public List<Expense> getByCategory(@PathVariable String category) {
-        return expenseService.getByCategory(category);
+    @GetMapping("/category/{category}/chatId/{chatId}")
+    public List<Expense> getByCategory(@PathVariable String category, @PathVariable Long chatId) {
+        return expenseService.getByCategoryAndChatId(category, chatId);
     }
 
     @DeleteMapping("/{id}")

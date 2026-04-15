@@ -37,13 +37,9 @@ public class ReminderService {
         return "Reminder deleted successfully. use /reminders to get list";
     }
 
-    public String deleteAllPastReminders() {
+    public String deleteAllPastReminders(Long chatId) {
         LocalDateTime now = LocalDateTime.now();
-        List<Reminder> pastReminders = reminderRepository.findAll()
-                .stream()
-                .filter(r -> (r.isSent() || r.getReminderTime().isBefore(now)))
-                .toList();
-
+        List<Reminder> pastReminders = reminderRepository.findRemindersToProcess(chatId, now);
         reminderRepository.deleteAll(pastReminders);
         return "All Past reminders cleared!. use /reminder to get List of reminders";
     }
@@ -56,8 +52,7 @@ public class ReminderService {
     }
 
     public List<Reminder> getRemindersBetween(Long chatId, LocalDateTime start, LocalDateTime end) {
-    return reminderRepository.findByChatIdAndReminderTimeBetweenAndSentFalse(
-        chatId, start, end
-    );
-}
+        return reminderRepository.findByChatIdAndReminderTimeBetweenAndSentFalse(
+                chatId, start, end);
+    }
 }

@@ -1,13 +1,14 @@
 package com.project.personal_assistant.bot.handler;
+
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.objects.Document;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 import com.project.personal_assistant.service.RAGService;
 import com.project.personal_assistant.service.SessionManagerService;
 import com.project.personal_assistant.service.SessionManagerService.UserState;
 import com.project.personal_assistant.service.TelegramFileService;
-import org.telegram.telegrambots.meta.api.objects.Document;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,24 +25,24 @@ public class FileUploadHandler implements MessageHandler {
     private final TelegramFileService telegramFileService;
 
     @Override
-    public boolean canHandle(String messageText,Long chatId) {
+    public boolean canHandle(String messageText, Long chatId) {
         return false;
     }
-     @Override
+
+    @Override
     public String handle(Update update, String messageText) {
-     return handleFileUpload(update);
+        return handleFileUpload(update);
     }
 
     public String handleFileUpload(Update update) {
-        long chatId = update.getMessage().getChatId();
+        long chatId = update.getMessage().getFrom().getId();
 
         try {
             if (!update.getMessage().hasDocument()) {
                 return "❌ File nahi mili!\n\nPDF, TXT ya DOCX upload karo.";
             }
 
-            Document document =
-                update.getMessage().getDocument();
+            Document document = update.getMessage().getDocument();
 
             String fileName = document.getFileName();
             String fileId = document.getFileId();
@@ -63,8 +64,8 @@ public class FileUploadHandler implements MessageHandler {
             log.info("File processed — chatId: {}", chatId);
 
             return "✅ File upload ho gayi!\n\n" +
-                   "Ab kuch bhi puchho — main is document se answer dunga.\n" +
-                   "/done — session khatam karo";
+                    "Ab kuch bhi puchho — main is document se answer dunga.\n" +
+                    "/done — session khatam karo";
 
         } catch (Exception e) {
             log.error("File upload error — chatId: {}", chatId, e);
@@ -72,10 +73,5 @@ public class FileUploadHandler implements MessageHandler {
             return "❌ File upload nahi hua! Dobara try karo.";
         }
     }
-   
 
-
-    
-
-   
 }

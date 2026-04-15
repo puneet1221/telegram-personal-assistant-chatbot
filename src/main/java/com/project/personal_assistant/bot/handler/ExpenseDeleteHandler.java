@@ -1,6 +1,5 @@
 package com.project.personal_assistant.bot.handler;
 
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -20,7 +19,7 @@ public class ExpenseDeleteHandler implements MessageHandler {
     private ExpenseService expenseService;
 
     @Override
-    public boolean canHandle(String messageText ,Long chatId) {
+    public boolean canHandle(String messageText, Long chatId) {
         log.debug("handled by Expense Delete Handler");
         return messageText.toLowerCase().startsWith("delete expense");
     }
@@ -28,12 +27,13 @@ public class ExpenseDeleteHandler implements MessageHandler {
     @Override
     public String handle(Update update, String messageText) {
         try {
+            Long chatId = update.getMessage().getChatId();
             String[] parts = messageText.split(" ");
             if (parts.length < 3) {
                 return "Format galat!\nSahi: delete expense 1";
             }
-            int index = Integer.parseInt(parts[2])-1;
-            if (expenseService.deleteExpenseByIndex(index)) {
+            int index = Integer.parseInt(parts[2]) - 1;
+            if (expenseService.deleteExpenseByIndex(chatId, index)) {
                 return "Expense deleted";
             } else {
                 return "given index doesnt exist. Type /expenses to see list of expenses";

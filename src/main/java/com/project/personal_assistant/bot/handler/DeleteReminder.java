@@ -17,9 +17,9 @@ public class DeleteReminder implements MessageHandler {
     private final ReminderService reminderService;
 
     @Override
-    public boolean canHandle(String messageText,Long chatId) {
-        return(messageText.toLowerCase().startsWith("delete reminder") ||
-            messageText.toLowerCase().startsWith("delete past reminder"));
+    public boolean canHandle(String messageText, Long chatId) {
+        return (messageText.toLowerCase().startsWith("delete reminder") ||
+                messageText.toLowerCase().startsWith("delete past reminder"));
     }
 
     @Override
@@ -28,7 +28,7 @@ public class DeleteReminder implements MessageHandler {
             return deleteReminderByIndex(messageText);
         }
         if (messageText.toLowerCase().startsWith("delete past reminders")) {
-            return deleteAllPastReminders(messageText);
+            return deleteAllPastReminders(update.getMessage().getChatId());
         }
         return "\nwrong format \n" +
                 " Please enter correct format as show below:\n" +
@@ -51,8 +51,8 @@ public class DeleteReminder implements MessageHandler {
         return reminderService.deleteByIndex(index);
     }
 
-    public String deleteAllPastReminders(String messageText) {
-        return reminderService.deleteAllPastReminders();
+    public String deleteAllPastReminders(Long chatId) {
+        return reminderService.deleteAllPastReminders(chatId);
     }
 
 }

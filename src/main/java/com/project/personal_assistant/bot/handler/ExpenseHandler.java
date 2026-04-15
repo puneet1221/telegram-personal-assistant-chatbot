@@ -20,12 +20,11 @@ public class ExpenseHandler implements MessageHandler {
     private final GeminiService geminiService;
 
     @Override
-    public boolean canHandle(String messageText,Long chatId) {
-       if (messageText.toLowerCase().startsWith("delete") ||
-        messageText.toLowerCase().startsWith("edit") ||
-        messageText.toLowerCase().startsWith("/")) {
-        return false;
-    }
+    public boolean canHandle(String messageText, Long chatId) {
+        if (messageText.toLowerCase().contains("delete expense") ||
+                messageText.toLowerCase().contains("edit expense")) {
+            return false;
+        }
 
         JsonObject parsed = geminiService.parseUserMessage(messageText);
         return "expense".equals(parsed.get("type").getAsString());
@@ -42,14 +41,14 @@ public class ExpenseHandler implements MessageHandler {
             String description = data.has("description")
                     ? data.get("description").getAsString()
                     : "";
-            
-                    //dto
+
+            // dto
             Expense expense = new Expense();
             expense.setAmount(amount);
             expense.setCategory(category);
             expense.setDescription(description);
 
-            //pushing to db
+            // pushing to db
             expenseService.addExpense(expense);
 
             return "Expense save ho gaya!\n" +

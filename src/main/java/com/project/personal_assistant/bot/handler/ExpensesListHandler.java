@@ -17,17 +17,19 @@ public class ExpensesListHandler implements MessageHandler {
     private final ExpenseService expenseService;
 
     @Override
-    public boolean canHandle(String messageText,Long chatId) {
+    public boolean canHandle(String messageText, Long chatId) {
         return messageText.startsWith("/expenses");
     }
 
     @Override
     public String handle(Update update, String messageText) {
-        var expenses = expenseService.getAllExpenses();
+        Long chatId = update.getMessage().getFrom().getId();
+
+        var expenses = expenseService.getAllExpenses(chatId);
         if (expenses.isEmpty())
             return "Koi expense nahi abhi tak!";
 
-        StringBuilder sb = new StringBuilder("Teri expenses:\n\n");
+        StringBuilder sb = new StringBuilder(update.getMessage().getFrom().getFirstName() + "   Your expenses:\n\n");
         double total = 0;
         for (int i = 0; i < expenses.size(); i++) {
             Expense expense = expenses.get(i);
