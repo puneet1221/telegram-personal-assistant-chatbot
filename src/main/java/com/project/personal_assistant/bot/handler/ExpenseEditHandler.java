@@ -9,6 +9,7 @@ import com.project.personal_assistant.service.ExpenseService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
 @Order(5)
 @Component
@@ -18,7 +19,7 @@ public class ExpenseEditHandler implements MessageHandler {
     private ExpenseService expenseService;
 
     @Override
-    public boolean canHandle(String messageText,Long chatId) {
+    public boolean canHandle(String messageText, Long chatId) {
         return messageText.startsWith("edit expense");
     }
 
@@ -35,7 +36,8 @@ public class ExpenseEditHandler implements MessageHandler {
             String category = parts[4];
             String description = parts[5];
 
-            boolean edited = expenseService.editExpensesByIndex(index, amount, category, description);
+            boolean edited = expenseService.editExpensesByIndex(index, amount, category, description,
+                    update.getMessage().getFrom().getId());
             if (edited) {
                 return "Expense update ho gaya!\n" +
                         "Amount: Rs." + amount + "\n" +

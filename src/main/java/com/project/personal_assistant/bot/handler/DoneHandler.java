@@ -21,20 +21,20 @@ public class DoneHandler implements MessageHandler {
     private final SessionManagerService sessionManager;
 
     @Override
-    public boolean canHandle(String messageText, Long chatId) {
+    public boolean canHandle(String messageText, Long userId) {
         // Sirf /done command handle karo
         return messageText.equalsIgnoreCase("/done");
     }
 
     @Override
     public String handle(Update update, String messageText) {
-        long chatId = update.getMessage().getChatId();
+        long userId = update.getMessage().getFrom().getId();
 
-        log.info("Session clear ho raha hai — chatId: {}", chatId);
+        log.info("Session clear ho raha hai — userId: {}", userId);
 
         // Session completely clear karo
         // State bhi jaayegi, document ID bhi
-        sessionManager.clearSession(chatId);
+        sessionManager.clearSession(userId);
 
         return "✅ Session khatam ho gaya!\n\n" +
                 "Available commands:\n" +

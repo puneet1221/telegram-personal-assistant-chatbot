@@ -44,7 +44,7 @@ public class RAGService {
      * Process file using Apache Tika and store chunks in MongoDB
      * Includes file size validation and semantic-aware chunking
      */
-    public void processFile(byte[] fileContent, String fileName) {
+    public void processFile(byte[] fileContent, String fileName,Long userId) {
         try {
             log.info("Processing file: {}", fileName);
             
@@ -63,6 +63,7 @@ public class RAGService {
 
             // Create document with persistent metadata
             Map<String, Object> metadata = Map.of(
+                    "userId",userId,
                     "fileName", fileName,
                     "fileSize", String.valueOf(fileContent.length),
                     "processedAt", String.valueOf(System.currentTimeMillis()));
@@ -98,16 +99,31 @@ public class RAGService {
         try {
             log.info("Processing question: {}", query);
 
-            // Search for similar chunks
-            List<Document> similarDocs = vectorStore.similaritySearch(
-                    SearchRequest.query(query).withTopK(3));
+           
+            /*
+            Instead of raw similaritySearch we will use filter so that each user
+            has access only to their own documents. For that we will need to add userId in metadata while
+         storging the document adnd then use that userId to filtr the docuements while searching.
+            
+            */
+                        // 1. Create the metadata filter for the specific user
+                Filter.Expression filterExpression = new Filter.ExpressionBuilder()
+                    .eq("userId", String.valueOf(telegramUserId))
+                    .build();
 
-            // Check if relevant documents found
-            if (similarDocs.isEmpty()) {
-                log.warn("No relevant documents found for query: {}", query);
-                return "❌ I couldn't find any relevant information to answer your question. " +
-                        "Please upload documents first.";
-            }
+                // 2. Create the SearchRequest using the filter
+                SearchRequest searchRequest = SearchRequest.query(query)
+                    .withTopK(3)
+                    .withFilterExpression(filterExpression);
+
+                // 3. Execute the similarity search using the request object
+                List<Document> similarDocs = vectorStore.similaritySearch(searchRequest);
+
+                // 4. Validation logic
+                if (similarDocs.isEmpty()) {
+                    log.warn("No isolated documents found for user: {} with query: {}", telegramUserId, query);
+                    return "❌ No documents found in your current session. Please upload a file first.";
+                }
 
             // Combine chunks with separator
             String context = similarDocs.stream()

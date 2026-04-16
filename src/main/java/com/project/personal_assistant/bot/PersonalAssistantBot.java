@@ -5,7 +5,9 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramWebhookBot;
+import org.telegram.telegrambots.meta.api.methods.ActionType;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.send.SendChatAction;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -64,11 +66,11 @@ public class PersonalAssistantBot extends TelegramWebhookBot {
     public BotApiMethod<?> onWebhookUpdateReceived(Update update) {
         if (!update.hasMessage())
             return null;
-
         long chatId = update.getMessage().getChatId();
         if (update.getMessage().hasPhoto() || update.getMessage().hasVoice() || update.getMessage().hasAudio()) {
             String name = update.getMessage().getFrom().getFirstName();
-            sendMessage(chatId, String.format("Sorry Dear %s <3 I can't handle these yet. Currently I can handle text only", name));
+            sendMessage(chatId,
+                    String.format("Sorry Dear %s <3 I can't handle these yet. Currently I can handle text only", name));
             return null;
         }
 
@@ -124,7 +126,7 @@ public class PersonalAssistantBot extends TelegramWebhookBot {
         sendMessage(chatId, text);
     }
 
-    private void sendMessage(long chatId, String text) {
+    public void sendMessage(long chatId, String text) {
         SendMessage message = new SendMessage();
         message.setChatId(String.valueOf(chatId));
         message.setText(text);
@@ -132,6 +134,17 @@ public class PersonalAssistantBot extends TelegramWebhookBot {
             execute(message);
         } catch (TelegramApiException e) {
             log.error("Message send nahi hua: ", e);
+        }
+    }
+
+    public void sendAction(ActionType action, Long chatId) {
+        SendChatAction chatAction = new SendChatAction();
+        chatAction.setChatId(chatId.toString());
+        chatAction.setAction(action);
+        try {
+            execute(chatAction);
+        } catch (Exception e) {
+            log.error("error sending tan Action...", e);
         }
     }
 }

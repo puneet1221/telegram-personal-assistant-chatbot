@@ -57,7 +57,8 @@ public class HabitHandler implements MessageHandler {
                     "/today - See today's habit status\n" +
                     "/mark-habit-done [index] - Mark habit as completed";
 
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException e) 
+        {
             log.error("Number format error in habit handler", e);
             return "❌ Invalid input. Please provide valid numbers or habit names.";
         } catch (StringIndexOutOfBoundsException e) {
