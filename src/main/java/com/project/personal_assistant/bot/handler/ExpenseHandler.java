@@ -7,7 +7,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import com.google.gson.JsonObject;
 import com.project.personal_assistant.model.Expense;
 import com.project.personal_assistant.service.ExpenseService;
-import com.project.personal_assistant.service.GeminiService;
+import com.project.personal_assistant.service.GroqChatService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 public class ExpenseHandler implements MessageHandler {
 
     private final ExpenseService expenseService;
-    private final GeminiService geminiService;
+    private final GroqChatService groqChatService;
 
     @Override
     public boolean canHandle(String messageText, Long chatId) {
@@ -26,7 +26,7 @@ public class ExpenseHandler implements MessageHandler {
             return false;
         }
 
-        JsonObject parsed = geminiService.parseUserMessage(messageText);
+        JsonObject parsed = groqChatService.parseUserMessage(messageText);
         return "expense".equals(parsed.get("type").getAsString());
     }
 
@@ -34,7 +34,7 @@ public class ExpenseHandler implements MessageHandler {
     public String handle(Update update, String messageText) {
         try {
 
-            JsonObject data = geminiService.parseUserMessage(messageText);
+            JsonObject data = groqChatService.parseUserMessage(messageText);
 
             Double amount = data.get("amount").getAsDouble();
             String category = data.get("category").getAsString();

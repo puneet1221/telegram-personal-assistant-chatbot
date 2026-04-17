@@ -14,7 +14,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import com.project.personal_assistant.bot.handler.FileUploadHandler;
 import com.project.personal_assistant.bot.handler.MessageHandler;
-import com.project.personal_assistant.service.GeminiService;
+import com.project.personal_assistant.service.GroqChatService;
 import com.project.personal_assistant.service.SessionManagerService;
 import com.project.personal_assistant.service.SessionManagerService.UserState;
 import com.project.personal_assistant.service.UserService;
@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PersonalAssistantBot extends TelegramWebhookBot {
 
     private final List<MessageHandler> handlers;
-    private final GeminiService geminiService;
+    private final GroqChatService groqChatService;
     private final UserService userService;
     private final SessionManagerService sessionManager;
     private final FileUploadHandler fileUploadHandler;
@@ -39,14 +39,14 @@ public class PersonalAssistantBot extends TelegramWebhookBot {
 
     public PersonalAssistantBot(
             List<MessageHandler> handlers,
-            GeminiService geminiService,
+            GroqChatService groqChatService,
             UserService userService,
             SessionManagerService sessionManager,
             FileUploadHandler fileUploadHandler,
             @Value("${telegram.bot.token}") String botToken) {
         super(botToken);
         this.handlers = handlers;
-        this.geminiService = geminiService;
+        this.groqChatService = groqChatService;
         this.userService = userService;
         this.sessionManager = sessionManager;
         this.fileUploadHandler = fileUploadHandler;
@@ -115,7 +115,7 @@ public class PersonalAssistantBot extends TelegramWebhookBot {
 
         // Null response — kisi handler ne handle nahi kiya
         if (response != null) {
-            geminiService.clearCache(messageText);
+            groqChatService.clearCache(messageText);
             sendMessage(chatId, response);
         }
 

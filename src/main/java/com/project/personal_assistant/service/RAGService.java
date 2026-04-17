@@ -8,6 +8,8 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.filter.Filter;
+import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.stereotype.Service;
 
 import lombok.AllArgsConstructor;
@@ -30,28 +32,28 @@ public class RAGService {
     private final FileProcessorService fileProcessor;
     /*
      * TokenTextSplitter optimized for Groq's large context window
-     * 2000: Max tokens per chunk (optimized for Groq's 128K context)
+     * 1000: Max tokens per chunk (optimized for Groq's 128K context)
      * 300: Overlap tokens (maintains cross-chunk context)
      * 5: Min characters (discard very small/useless chunks)
      * 10000: Max total chunks (safety guard to prevent memory crash)
      * true: Keep separators (preserves original formatting/newlines)
      */
-    private final TokenTextSplitter splitter = new TokenTextSplitter(2000, 300, 5, 10000, true);
-    
+    private final TokenTextSplitter splitter = new TokenTextSplitter(1000, 300, 5, 10000, true);
+
     private static final long MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB limit
 
     /**
      * Process file using Apache Tika and store chunks in MongoDB
      * Includes file size validation and semantic-aware chunking
      */
-    public void processFile(byte[] fileContent, String fileName,Long userId) {
+    public List<String> processFile(byte[] fileContent, String fileName, Long userId) {
         try {
             log.info("Processing file: {}", fileName);
-            
+
             // ✅ Validate file size to prevent memory issues
             if (fileContent.length > MAX_FILE_SIZE) {
                 throw new RuntimeException(
-                    String.format("File exceeds maximum size limit of %d MB", MAX_FILE_SIZE / (1024 * 1024)));
+                        String.format("File exceeds maximum size limit of %d MB", MAX_FILE_SIZE / (1024 * 1024)));
             }
 
             // ✅ Extract text using Tika (works for ANY format)
@@ -63,24 +65,29 @@ public class RAGService {
 
             // Create document with persistent metadata
             Map<String, Object> metadata = Map.of(
-                    "userId",userId,
+                    "userId", userId,
                     "fileName", fileName,
                     "fileSize", String.valueOf(fileContent.length),
                     "processedAt", String.valueOf(System.currentTimeMillis()));
-            
+
             Document rawDoc = new Document(extractedText, metadata);
 
             // Split into semantic chunks with metadata preservation
             List<Document> chunks = splitter.apply(List.of(rawDoc));
-            
-            // // Har chunk par file ki details (name, size, time) ka stamp lagana taaki pehchan sakein ki ye kis file ka tukda hai.
+
+            // // Har chunk par file ki details (name, size, time) ka stamp lagana taaki
+            // pehchan sakein ki ye kis file ka tukda hai.
             chunks.forEach(chunk -> chunk.getMetadata().putAll(metadata));
 
             // Store in MongoDB via VectorStore
             vectorStore.accept(chunks);
 
-            log.info("✅ Successfully processed {} into {} chunks (avg ~{} tokens)", 
+            log.info("✅ Successfully processed {} into {} chunks (avg ~{} tokens)",
                     fileName, chunks.size(), extractedText.length() / chunks.size() / 4);
+
+            return chunks.stream()
+                    .map(Document::getId)
+                    .toList();
 
         } catch (Exception e) {
             log.error("Error processing file: {}", fileName, e);
@@ -91,7 +98,7 @@ public class RAGService {
     /**
      * Ask a question and get answer based on stored documents
      */
-    public String askQuestion(String query) {
+    public String askQuestion(String query, Long userId) {
         if (query == null || query.trim().isEmpty()) {
             return "❌ Please provide a valid question.";
         }
@@ -99,31 +106,32 @@ public class RAGService {
         try {
             log.info("Processing question: {}", query);
 
-           
             /*
-            Instead of raw similaritySearch we will use filter so that each user
-            has access only to their own documents. For that we will need to add userId in metadata while
-         storging the document adnd then use that userId to filtr the docuements while searching.
-            
-            */
-                        // 1. Create the metadata filter for the specific user
-                Filter.Expression filterExpression = new Filter.ExpressionBuilder()
-                    .eq("userId", String.valueOf(telegramUserId))
-                    .build();
+             * Instead of raw similaritySearch we will use filter so that each user
+             * has access only to their own documents. For that we will need to add userId
+             * in metadata while
+             * storging the document adnd then use that userId to filtr the docuements while
+             * searching.
+             * 
+             */
+            // 1. Create the metadata filter for the specific user
+            FilterExpressionBuilder b = new FilterExpressionBuilder();
 
-                // 2. Create the SearchRequest using the filter
-                SearchRequest searchRequest = SearchRequest.query(query)
+            Filter.Expression filterExpression = b.eq("userId", userId).build();
+
+            // 2. Create the SearchRequest using the filter
+            SearchRequest searchRequest = SearchRequest.query(query)
                     .withTopK(3)
                     .withFilterExpression(filterExpression);
 
-                // 3. Execute the similarity search using the request object
-                List<Document> similarDocs = vectorStore.similaritySearch(searchRequest);
+            // 3. Execute the similarity search using the request object
+            List<Document> similarDocs = vectorStore.similaritySearch(searchRequest);
 
-                // 4. Validation logic
-                if (similarDocs.isEmpty()) {
-                    log.warn("No isolated documents found for user: {} with query: {}", telegramUserId, query);
-                    return "❌ No documents found in your current session. Please upload a file first.";
-                }
+            // 4. Validation logic
+            if (similarDocs.isEmpty()) {
+                log.warn("No isolated documents found for user: {} with query: {}", userId, query);
+                return "❌ No documents found in your current session. Please upload a file first.";
+            }
 
             // Combine chunks with separator
             String context = similarDocs.stream()
