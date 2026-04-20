@@ -4,11 +4,9 @@ import java.util.List;
 
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.meta.api.methods.ActionType;
 import org.telegram.telegrambots.meta.api.objects.Document;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import com.project.personal_assistant.bot.PersonalAssistantBot;
 import com.project.personal_assistant.service.RAGService;
 import com.project.personal_assistant.service.SessionManagerService;
 import com.project.personal_assistant.service.SessionManagerService.UserState;
@@ -25,12 +23,11 @@ public class FileUploadHandler implements MessageHandler {
 
     private final SessionManagerService sessionManager;
     private final RAGService ragService;
-    private final PersonalAssistantBot bot;
     private final TelegramFileService telegramFileService;
 
     @Override
     public boolean canHandle(String messageText, Long userId) {
-        return false;
+        return sessionManager.getState(userId) == UserState.WAITING_FOR_FILE;
     }
 
     @Override
@@ -53,12 +50,9 @@ public class FileUploadHandler implements MessageHandler {
             String fileName = document.getFileName();
             String fileId = document.getFileId();
 
-            bot.sendMessage(chatId, "File Received...");
             log.info("File received — name: {}, fileId: {}", fileName, fileId);
 
             // Telegram se file download karo
-            bot.sendMessage(chatId, "Processing...");
-            bot.sendAction(ActionType.UPLOADDOCUMENT, chatId);
             byte[] fileContent = telegramFileService.downloadFile(fileId);
 
             // RAGService ko process karne do

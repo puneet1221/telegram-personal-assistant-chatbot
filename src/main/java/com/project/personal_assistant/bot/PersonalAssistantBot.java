@@ -12,7 +12,6 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import com.project.personal_assistant.bot.handler.FileUploadHandler;
 import com.project.personal_assistant.bot.handler.MessageHandler;
 import com.project.personal_assistant.service.GroqChatService;
 import com.project.personal_assistant.service.SessionManagerService;
@@ -41,7 +40,6 @@ public class PersonalAssistantBot extends TelegramWebhookBot {
             GroqChatService groqChatService,
             UserService userService,
             SessionManagerService sessionManager,
-            FileUploadHandler fileUploadHandler,
             @Value("${telegram.bot.token}") String botToken) {
         super(botToken);
         this.handlers = handlers;
@@ -80,7 +78,7 @@ public class PersonalAssistantBot extends TelegramWebhookBot {
         // File upload check — WAITING_FOR_FILE state mein
         if (update.getMessage().hasDocument()) {
             log.info("Document received from user {} \n\n {}", update.getMessage().getChatId(), update);
-
+            sendAction(ActionType.UPLOADDOCUMENT, chatId);
             UserState state = sessionManager.getState(chatId);
 
             if (state == UserState.WAITING_FOR_FILE) {
@@ -143,7 +141,7 @@ public class PersonalAssistantBot extends TelegramWebhookBot {
         chatAction.setChatId(chatId.toString());
         chatAction.setAction(action);
         try {
-            execute(chatAction);
+            execute(chatAction); 
         } catch (Exception e) {
             log.error("error sending tan Action...", e);
         }

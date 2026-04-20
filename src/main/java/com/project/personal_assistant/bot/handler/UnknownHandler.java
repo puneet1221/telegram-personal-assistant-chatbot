@@ -4,6 +4,9 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
+import com.google.gson.JsonObject;
+import com.project.personal_assistant.service.GroqChatService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -12,20 +15,24 @@ import lombok.extern.slf4j.Slf4j;
 @Order(8)
 @RequiredArgsConstructor
 public class UnknownHandler implements MessageHandler {
-
+ private final GroqChatService groqChatService;
     @Override
     public boolean canHandle(String messageText,Long chatId) {
-        log.debug("unknown handler invoked");
+        log.info("unknown handler invoked");
         return true;
     }
 
     @Override
     public String handle(Update update, String messageText) {
-        return "Samjha nahi bhai!\n\n" +
-                "Ye try karo:\n" +
-                "aaj 500 khane pe kharch kiye\n" +
-                "kal subah 8 baje gym yaad dilana\n" +
-                "/expenses\n" +
-                "/reminders";
+        JsonObject object=groqChatService.parseUserMessage(messageText);
+        String response=object.get("reply")+"""
+        /n/n
+        /start ->To get started
+        /help 
+        /habit
+                
+                """;
+        log.info(object.toString());
+        return response;
     }
 }

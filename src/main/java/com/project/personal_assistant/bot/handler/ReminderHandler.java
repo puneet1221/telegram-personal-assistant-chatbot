@@ -13,7 +13,8 @@ import com.project.personal_assistant.service.QuartzService;
 import com.project.personal_assistant.service.ReminderService;
 
 import lombok.RequiredArgsConstructor;
-
+import lombok.extern.slf4j.Slf4j;
+@Slf4j
 @Component
 @Order(7)
 @RequiredArgsConstructor
@@ -25,6 +26,7 @@ public class ReminderHandler implements MessageHandler {
 
     @Override
     public boolean canHandle(String messageText, Long chatId) {
+        log.info("can Reminder Handler handle this? {}",messageText);
         if (messageText.toLowerCase().startsWith("delete") ||
                 messageText.toLowerCase().startsWith("edit") ||
                 messageText.toLowerCase().startsWith("/")) {

@@ -100,7 +100,7 @@ public class GroqChatService {
                 log.error("Groq API error: {} - {}", response.statusCode(), response.body());
                 return createFallbackResponse("API Error aaya bhai, thoda wait kar.");
             }
-
+           
             return extractJsonFromResponse(response.body());
 
         } catch (Exception e) {
@@ -121,7 +121,7 @@ public class GroqChatService {
 
             // Cleaning markdown backticks if Groq adds them
             content = content.replaceAll("```json", "").replaceAll("```", "").trim();
-
+             log.info(content);
             return gson.fromJson(content, JsonObject.class);
         } catch (Exception e) {
             log.error("JSON Extraction failed from Groq response", e);
