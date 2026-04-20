@@ -29,7 +29,6 @@ public class PersonalAssistantBot extends TelegramWebhookBot {
     private final GroqChatService groqChatService;
     private final UserService userService;
     private final SessionManagerService sessionManager;
-    private final FileUploadHandler fileUploadHandler;
 
     @Value("${telegram.bot.username}")
     private String botUsername;
@@ -49,7 +48,6 @@ public class PersonalAssistantBot extends TelegramWebhookBot {
         this.groqChatService = groqChatService;
         this.userService = userService;
         this.sessionManager = sessionManager;
-        this.fileUploadHandler = fileUploadHandler;
     }
 
     @Override
@@ -82,16 +80,19 @@ public class PersonalAssistantBot extends TelegramWebhookBot {
         // File upload check — WAITING_FOR_FILE state mein
         if (update.getMessage().hasDocument()) {
             log.info("Document received from user {} \n\n {}", update.getMessage().getChatId(), update);
-            ;
 
             UserState state = sessionManager.getState(chatId);
 
             if (state == UserState.WAITING_FOR_FILE) {
-                // File upload handle karo
-                String response = fileUploadHandler.handleFileUpload(update);
+                // ✅ handlers list se extract karo — directly fileUploadHandler mat bulao
+                String response = handlers.stream()
+                        .filter(h -> h.canHandle("", chatId)) // state se match hoga
+                        .findFirst()
+                        .map(h -> h.handle(update, ""))
+                        .orElse("Kuch galat hua, dobara try karo!");
+
                 sendMessage(chatId, response);
             } else {
-                // File aai but session nahi tha
                 sendMessage(chatId, "File receive hua!\n" +
                         "Document Q&A ke liye pehle /QNA:read-a-file likho.");
             }

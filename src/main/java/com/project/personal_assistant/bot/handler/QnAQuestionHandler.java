@@ -27,16 +27,17 @@ public class QnAQuestionHandler implements MessageHandler {
     private final SessionManagerService sessionManager;
 
     @Override
-    public boolean canHandle(String messageText,Long chatId) {
+    public boolean canHandle(String messageText, Long chatId) {
         // /done command ye handler handle nahi karega
         // Baaki sab QNA_SESSION mein ye handle karega
-    return sessionManager.getState(chatId) == UserState.QNA_SESSION
-        && !messageText.equalsIgnoreCase("/done");
+        return sessionManager.getState(chatId) == UserState.QNA_SESSION
+                && !messageText.equalsIgnoreCase("/done");
     }
 
     @Override
     public String handle(Update update, String messageText) {
         long chatId = update.getMessage().getChatId();
+        long userId = update.getMessage().getFrom().getId();
 
         // Session check karo — agar QNA_SESSION nahi hai toh handle mat karo
         if (sessionManager.getState(chatId) != SessionManagerService.UserState.QNA_SESSION) {
@@ -49,7 +50,7 @@ public class QnAQuestionHandler implements MessageHandler {
         try {
             // RAGService se answer lo
             // Ye tera existing askQuestion() method hai
-            String answer = ragService.askQuestion(messageText);
+            String answer = ragService.askQuestion(messageText, userId);
 
             return "🤖 " + answer + "\n\n" +
                     "_Session active hai — aur questions puchho_\n" +
