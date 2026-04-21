@@ -4,6 +4,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -32,6 +33,7 @@ public class BotConfig {
         SetWebhook webhook = SetWebhook.builder()
             .url(webhookUrl + "/webhook")
             .build();
+        webhook.setAllowedUpdates(List.of("message", "callback_query"));
         TelegramBotsApi api = new TelegramBotsApi(DefaultBotSession.class);
         try {
             api.registerBot(bot, webhook);

@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -35,24 +34,25 @@ public class ExpenseService {
         expenseRepository.deleteById(id);
     }
 
-    public boolean deleteExpenseByIndex(Long chatId, int index) {
-        List<String> expenseIds = expenseRepository.findAllIdsByChatId(chatId);
-        if (index < 0 || index >= expenseIds.size())
+    public boolean deleteExpenseByIndex(int index, Long chatId) {
+        List<Expense> expenses = expenseRepository.findIdsByChatId(chatId); // ✅ sirf IDs
+        if (index < 0 || index >= expenses.size())
             return false;
-        expenseRepository.deleteById(expenseIds.get(index));
+        expenseRepository.deleteById(expenses.get(index).getId());
         return true;
     }
 
-    public boolean editExpensesByIndex(int index, Double amount, String category, String description, Long chatId) {
-        List<String> expenseIds = expenseRepository.findAllIdsByChatId(chatId);
-        if (index < 0 || index >= expenseIds.size())
+    public boolean editExpensesByIndex(int index, Double amount, String category,
+            String description, Long chatId) {
+        List<Expense> expenses = expenseRepository.findIdsByChatId(chatId); // ✅ sirf IDs
+        if (index < 0 || index >= expenses.size())
             return false;
-        Optional<Expense> expenseOptional = expenseRepository.findById(expenseIds.get(index));
-        if (!expenseOptional.isPresent()) {
+
+        // ID se full document fetch karo — sirf ek record
+        Expense expense = expenseRepository.findById(expenses.get(index).getId()).orElse(null);
+        if (expense == null)
             return false;
-        }
-        Expense expense = expenseOptional.get();
-        expense.setChatId(chatId);
+
         expense.setAmount(amount);
         expense.setCategory(category);
         expense.setDescription(description);

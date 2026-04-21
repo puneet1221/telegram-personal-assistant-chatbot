@@ -25,7 +25,19 @@ public class SessionManagerService {
     public enum UserState {
         NORMAL,
         WAITING_FOR_FILE,
+        WAITING_FOR_EDIT_EXPENSE,
+        WAITING_FOR_DELETE_EXPENSE,
         QNA_SESSION
+    }
+
+    private final Map<Long, Integer> pendingIndex = new ConcurrentHashMap<>();
+
+    public void setPendingIndex(Long chatId, int index) {
+        pendingIndex.put(chatId, index);
+    }
+
+    public int getPendingIndex(Long chatId) {
+        return pendingIndex.getOrDefault(chatId, -1);
     }
 
     // ConcurrentHashMap — thread safe hai
@@ -53,7 +65,7 @@ public class SessionManagerService {
 
     // User ka document ID store karo
     // Ye ID RAG backend ko bhejenge query ke time
-    public void setDocument(Long userId,List<String> chunkIds) {
+    public void setDocument(Long userId, List<String> chunkIds) {
         userDocuments.put(userId, chunkIds);
     }
 

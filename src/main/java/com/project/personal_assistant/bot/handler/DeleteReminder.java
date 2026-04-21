@@ -7,12 +7,13 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import com.project.personal_assistant.service.ReminderService;
 
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Order(5)
 @Component
 @Slf4j
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class DeleteReminder implements MessageHandler {
     private final ReminderService reminderService;
 
@@ -24,8 +25,9 @@ public class DeleteReminder implements MessageHandler {
 
     @Override
     public String handle(Update update, String messageText) {
+        Long chatId=update.getMessage().getChatId();
         if (messageText.startsWith("delete reminder")) {
-            return deleteReminderByIndex(messageText);
+            return deleteReminderByIndex(messageText,chatId);
         }
         if (messageText.toLowerCase().startsWith("delete past reminders")) {
             return deleteAllPastReminders(update.getMessage().getChatId());
@@ -36,7 +38,7 @@ public class DeleteReminder implements MessageHandler {
                 " delete past reminders";
     }
 
-    public String deleteReminderByIndex(String messageText) {
+    public String deleteReminderByIndex(String messageText,Long chatId) {
         String[] parts = messageText.toLowerCase().split(" ");
         int index;
         try {
@@ -48,7 +50,7 @@ public class DeleteReminder implements MessageHandler {
                     " delete past reminders";
         }
 
-        return reminderService.deleteByIndex(index);
+        return reminderService.deleteByIndex(index,chatId);
     }
 
     public String deleteAllPastReminders(Long chatId) {

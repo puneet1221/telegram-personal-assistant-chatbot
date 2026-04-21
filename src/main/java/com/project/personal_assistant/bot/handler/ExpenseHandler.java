@@ -33,7 +33,7 @@ public class ExpenseHandler implements MessageHandler {
     @Override
     public String handle(Update update, String messageText) {
         try {
-
+              Long chatId = update.getMessage().getChatId(); 
             JsonObject data = groqChatService.parseUserMessage(messageText);
 
             Double amount = data.get("amount").getAsDouble();
@@ -44,6 +44,7 @@ public class ExpenseHandler implements MessageHandler {
 
             // dto
             Expense expense = new Expense();
+            expense.setChatId(chatId);
             expense.setAmount(amount);
             expense.setCategory(category);
             expense.setDescription(description);

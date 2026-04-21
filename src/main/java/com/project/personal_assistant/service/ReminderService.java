@@ -28,13 +28,14 @@ public class ReminderService {
         return reminderRepository.findByChatId(chatId);
     }
 
-    public String deleteByIndex(int index) {
-        List<Reminder> reminders = reminderRepository.findAll();
+
+    public String deleteByIndex(int index, Long chatId) {
+        List<Reminder> reminders = reminderRepository.findByChatId(chatId); // ✅
         if (index < 0 || index >= reminders.size()) {
             return "Please enter a valid reminder number";
         }
         reminderRepository.deleteById(reminders.get(index).getId());
-        return "Reminder deleted successfully. use /reminders to get list";
+        return "Reminder deleted!";
     }
 
     public String deleteAllPastReminders(Long chatId) {

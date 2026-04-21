@@ -1,5 +1,7 @@
 package com.project.personal_assistant.bot.handler;
 
+import java.util.List;
+
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -23,29 +25,30 @@ public class ExpensesListHandler implements MessageHandler {
 
     @Override
     public String handle(Update update, String messageText) {
-        Long chatId = update.getMessage().getFrom().getId();
+        Long chatId = update.getMessage().getChatId(); // ✅ chatId
 
-        var expenses = expenseService.getAllExpenses(chatId);
+        List<Expense> expenses = expenseService.getAllExpenses(chatId);
         if (expenses.isEmpty())
             return "Koi expense nahi abhi tak!";
 
-        StringBuilder sb = new StringBuilder(update.getMessage().getFrom().getFirstName() + "   Your expenses:\n\n");
+        String firstName = update.getMessage().getFrom().getFirstName();
+        StringBuilder sb = new StringBuilder(firstName + " your expenses:\n\n");
         double total = 0;
+
         for (int i = 0; i < expenses.size(); i++) {
             Expense expense = expenses.get(i);
-
-            Double amount = expense.getAmount() != null ? expense.getAmount() : 0.0;
+            double amount = expense.getAmount() != null ? expense.getAmount() : 0.0;
             String category = expense.getCategory() != null ? expense.getCategory() : "unknown";
             String description = expense.getDescription() != null ? expense.getDescription() : "";
 
-            sb.append(i + 1).append(". Rs.").append(amount)
+            sb.append(i + 1).append(". ₹").append(amount)
                     .append(" — ").append(category)
                     .append(" (").append(description).append(")\n");
             total += amount;
         }
-        sb.append("\nTotal: Rs.").append(total);
-        sb.append("\n To delete an expense : delete expense expense1");
-        sb.append("\n To edit an expense : edit expense 1 400 food snacks");
+
+        sb.append("\nTotal: ₹").append(total);
         return sb.toString();
     }
+
 }
