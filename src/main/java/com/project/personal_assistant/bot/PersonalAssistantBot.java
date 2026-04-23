@@ -21,10 +21,14 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import com.project.personal_assistant.bot.handler.ExpensesListHandler;
 import com.project.personal_assistant.bot.handler.MessageHandler;
 import com.project.personal_assistant.model.Expense;
+import com.project.personal_assistant.model.Habit;
+import com.project.personal_assistant.model.HabitLog;
 import com.project.personal_assistant.model.Reminder;
 import com.project.personal_assistant.service.BotMessageService;
 import com.project.personal_assistant.service.ExpenseService;
 import com.project.personal_assistant.service.GroqChatService;
+import com.project.personal_assistant.service.HabitService;
+import com.project.personal_assistant.service.NewsService;
 import com.project.personal_assistant.service.ReminderService;
 import com.project.personal_assistant.service.SessionManagerService;
 import com.project.personal_assistant.service.SessionManagerService.UserState;
@@ -41,6 +45,8 @@ public class PersonalAssistantBot extends TelegramWebhookBot implements BotMessa
     private final SessionManagerService sessionManager;
     private final ExpenseService expenseService;
     private final ReminderService reminderService;
+    private final HabitService habitService;
+    private final NewsService newsService;
 
     @Value("${telegram.bot.username}")
     private String botUsername;
@@ -49,11 +55,13 @@ public class PersonalAssistantBot extends TelegramWebhookBot implements BotMessa
     private String webhookUrl;
 
     public PersonalAssistantBot(
+            NewsService newsService,
             List<MessageHandler> handlers,
             GroqChatService groqChatService,
             ReminderService reminderService,
             UserService userService,
             SessionManagerService sessionManager,
+            HabitService habitService,
             ExpenseService expenseService,
             @Value("${telegram.bot.token}") String botToken) {
         super(botToken);
@@ -63,6 +71,8 @@ public class PersonalAssistantBot extends TelegramWebhookBot implements BotMessa
         this.sessionManager = sessionManager;
         this.expenseService = expenseService;
         this.reminderService = reminderService;
+        this.habitService = habitService;
+        this.newsService = newsService;
     }
 
     @Override
@@ -135,6 +145,18 @@ public class PersonalAssistantBot extends TelegramWebhookBot implements BotMessa
             sendReminderMenu(chatId);
             return null;
         }
+        if (messageText.equals("📅 Habits")) {
+            sendHabitMenu(chatId);
+            return null;
+        }
+        if (messageText.equals("☁️ Weather")) {
+            sendWeatherMenu(chatId);
+            return null;
+        }
+        if (messageText.equals("📰 News")) {
+            sendNewsMenu(chatId);
+            return null;
+        }
         sendMessage(chatId, "Samajh raha hoon...");
 
         // Handler dhundho — chatId bhi pass karo session check ke liye
@@ -151,6 +173,57 @@ public class PersonalAssistantBot extends TelegramWebhookBot implements BotMessa
         }
 
         return null;
+    }
+
+    public void sendNewsMenu(Long chatId) {
+
+        List<InlineKeyboardButton> row1 = new ArrayList<>();
+        InlineKeyboardButton world = new InlineKeyboardButton("🌍 World");
+        world.setCallbackData("news:world");
+        row1.add(world);
+
+        InlineKeyboardButton sports = new InlineKeyboardButton("🏏 Sports");
+        sports.setCallbackData("news:sports");
+        row1.add(sports);
+        InlineKeyboardButton tech = new InlineKeyboardButton("💻 Tech");
+        tech.setCallbackData("news:tech");
+        row1.add(tech);
+        InlineKeyboardButton business = new InlineKeyboardButton("💰 Business");
+        business.setCallbackData("news:business");
+        row1.add(business);
+        InlineKeyboardButton entertainment = new InlineKeyboardButton("🎬 Entertainment");
+        entertainment.setCallbackData("news:entertainment");
+        row1.add(entertainment);
+
+        InlineKeyboardButton health = new InlineKeyboardButton("🏥 Health");
+        health.setCallbackData("news:health");
+        row1.add(health);
+        InlineKeyboardButton top = new InlineKeyboardButton("🔥 Top Stories");
+        top.setCallbackData("news:top");
+        row1.add(top);
+        List<List<InlineKeyboardButton>> menu = row1.stream().map(x -> List.of(x)).toList();
+        sendInlineKeyboard(chatId, "📰 News — Category choose karo:", menu);
+    }
+
+    private void sendHabitMenu(long chatId) {
+        List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
+
+        InlineKeyboardButton add = new InlineKeyboardButton("➕ Add Habit");
+        add.setCallbackData("habit:add");
+
+        InlineKeyboardButton view = new InlineKeyboardButton("📋 View Habits");
+        view.setCallbackData("habit:view");
+
+        InlineKeyboardButton today = new InlineKeyboardButton("✅ Today");
+        today.setCallbackData("habit:today");
+
+        InlineKeyboardButton delete = new InlineKeyboardButton("🗑️ Delete");
+        delete.setCallbackData("habit:delete");
+
+        buttons.add(List.of(add, view));
+        buttons.add(List.of(today, delete));
+
+        sendInlineKeyboard(chatId, "📅 Habit Tracker", buttons);
     }
 
     public void sendReminderMenu(Long chatId) {
@@ -178,13 +251,170 @@ public class PersonalAssistantBot extends TelegramWebhookBot implements BotMessa
         sendMessage(chatId, text);
     }
 
+    public void sendWeatherMenu(long chatId) {
+        List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
+        InlineKeyboardButton city = new InlineKeyboardButton("🌍 Enter City");
+        city.setCallbackData("weather:city");
+        buttons.add(List.of(city));
+        sendInlineKeyboard(chatId, "☁️ Weather Check", buttons);
+    }
+
+    // central router for handling callbacks
     private void handleCallback(Update update) {
-        String callbackData = update.getCallbackQuery().getData();
+        String data = update.getCallbackQuery().getData();
         long chatId = update.getCallbackQuery().getMessage().getChatId();
 
+        if (data.startsWith("expense:")) {
+            handleExpenseCallback(update, data, chatId);
+            return;
+        }
+        if (data.startsWith("reminder:")) {
+            handleReminderCallback(update, data, chatId);
+            return;
+        }
+        if (data.startsWith("habit:")) {
+            handleHabitCallback(update, data, chatId);
+            return;
+        }
+        if (data.startsWith("weather:")) {
+            handleWeatherCallback(update, data, chatId);
+        }
+        if (data.startsWith("news:")) {
+            handleNewsCallback(update, data, chatId);
+        }
+    }
+
+    public void handleNewsCallback(Update update, String callbackData, Long chatId) {
+        sendMessage(chatId, "Fetching news... 📰");
+        switch (callbackData) {
+            case "news:sports" -> {
+                sendMessage(chatId, newsService.getNews(callbackData.split(":")[1]));
+            }
+            case "news:world" -> {
+                sendMessage(chatId, newsService.getNews(callbackData.split(":")[1]));
+            }
+            case "news:tech" -> {
+                sendMessage(chatId, newsService.getNews(callbackData.split(":")[1]));
+            }
+            case "news:business" -> {
+                sendMessage(chatId, newsService.getNews(callbackData.split(":")[1]));
+            }
+            case "news:entertainment" -> {
+                sendMessage(chatId, newsService.getNews(callbackData.split(":")[1]));
+            }
+            case "news:health" -> {
+                sendMessage(chatId, newsService.getNews(callbackData.split(":")[1]));
+            }
+            case "news:top" -> {
+                sendMessage(chatId, newsService.getTopNews());
+            }
+        }
+    }
+
+    public void handleWeatherCallback(Update update, String callbackData, long chatId) {
+        switch (callbackData) {
+            case "weather:city" -> {
+                sessionManager.setState(chatId, UserState.WAITING_FOR_CITY);
+                sendMessage(chatId, "🌍 City ka naam batao!\n\nExample: Mumbai");
+            }
+        }
+    }
+
+    private void handleHabitCallback(Update update, String callbackData, Long chatId) {
+        // specific callbacks pehle
+        if (callbackData.startsWith("habit:done:")) {
+            int index = Integer.parseInt(callbackData.split(":")[2]);
+            String response = habitService.logHabitCompletion(chatId, index + 1);
+            sendMessage(chatId, response);
+            // today status refresh karo
+            sendTodayHabits(chatId, update);
+            return;
+        }
+
+        if (callbackData.startsWith("habit:delete:")) {
+            int index = Integer.parseInt(callbackData.split(":")[2]);
+            boolean deleted = habitService.deleteHabit(chatId, index + 1);
+            sendMessage(chatId, deleted ? "🗑️ Habit delete ho gayi!" : "❌ Nahi mili!");
+            return;
+        }
+
+        switch (callbackData) {
+            case "habit:add" -> {
+                sessionManager.setState(chatId, UserState.WAITING_FOR_ADD_HABIT);
+                sendMessage(chatId,
+                        "➕ Habit ka naam batao!\n\nExample: gym, reading, meditation");
+            }
+            case "habit:view" -> {
+                List<Habit> habits = habitService.findAllHabits(chatId);
+                if (habits.isEmpty()) {
+                    sendMessage(chatId, "Koi habit nahi! ➕ Add karo pehle.");
+                    return;
+                }
+                StringBuilder sb = new StringBuilder("📋 Teri Habits:\n\n");
+                for (int i = 0; i < habits.size(); i++) {
+                    sb.append(i + 1).append(". ").append(habits.get(i).getName()).append("\n");
+                }
+                sendMessage(chatId, sb.toString());
+            }
+            case "habit:today" -> sendTodayHabits(chatId, update);
+            case "habit:delete" -> {
+                List<Habit> habits = habitService.findAllHabits(chatId);
+                if (habits.isEmpty()) {
+                    sendMessage(chatId, "Koi habit nahi!");
+                    return;
+                }
+                List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+                for (int i = 0; i < habits.size(); i++) {
+                    InlineKeyboardButton btn = new InlineKeyboardButton(
+                            (i + 1) + ". " + habits.get(i).getName());
+                    btn.setCallbackData("habit:delete:" + i);
+                    rows.add(List.of(btn));
+                }
+                sendInlineKeyboard(chatId, "🗑️ Kaunsi habit delete karein?", rows);
+            }
+        }
+
+    }
+
+    private void sendTodayHabits(long chatId, Update update) {
+        Message message = update.getCallbackQuery().getMessage();
+        message.setFrom(update.getCallbackQuery().getFrom());
+        update.setMessage(message);
+
+        List<Habit> habits = habitService.findAllHabits(chatId);
+        if (habits.isEmpty()) {
+            sendMessage(chatId, "Koi habit nahi! ➕ Add karo pehle.");
+            return;
+        }
+
+        List<HabitLog> todayLogs = habitService.getTodayStatus(chatId);
+
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+        StringBuilder sb = new StringBuilder("📊 Today's Status:\n\n");
+
+        for (int i = 0; i < habits.size(); i++) {
+            Habit habit = habits.get(i);
+            boolean done = todayLogs.stream()
+                    .anyMatch(l -> l.getHabitId().equals(habit.getId()));
+
+            sb.append(i + 1).append(". ")
+                    .append(done ? "✅ " : "❌ ")
+                    .append(habit.getName()).append("\n");
+
+            // sirf pending habits pe button
+            if (!done) {
+                InlineKeyboardButton btn = new InlineKeyboardButton(
+                        "✅ Mark Done — " + habit.getName());
+                btn.setCallbackData("habit:done:" + i);
+                rows.add(List.of(btn));
+            }
+        }
+
+        sendInlineKeyboard(chatId, sb.toString(), rows);
+    }
+
+    public void handleExpenseCallback(Update update, String callbackData, Long chatId) {
         if (callbackData.startsWith("expense:edit:")) {
-            if (callbackData.equals("expense:edit:"))
-                return;
             int index = Integer.parseInt(callbackData.split(":")[2]);
             sessionManager.setPendingIndex(chatId, index);
             sessionManager.setState(chatId, UserState.WAITING_FOR_EDIT_EXPENSE);
@@ -222,41 +452,6 @@ public class PersonalAssistantBot extends TelegramWebhookBot implements BotMessa
             InlineKeyboardButton no = new InlineKeyboardButton("❌ Cancel");
             no.setCallbackData("expense:delete:cancel");
             sendInlineKeyboard(chatId, "🗑️ Confirm karo?", List.of(List.of(yes, no)));
-            return;
-        }
-
-        if (callbackData.equals("reminder:delete:past")) {
-            String response = reminderService.deleteAllPastReminders(chatId);
-            sendMessage(chatId, response);
-            return;
-        }
-
-        // reminder:delete:<index>
-        if (callbackData.startsWith("reminder:delete:")) {
-            String action = callbackData.split(":")[2];
-
-            if (action.equals("confirm")) {
-                int index = sessionManager.getPendingIndex(chatId);
-                reminderService.deleteByIndex(index, chatId);
-                sessionManager.setState(chatId, UserState.NORMAL);
-                sendMessage(chatId, "🗑️ Reminder delete ho gaya!");
-                return;
-            }
-            if (action.equals("cancel")) {
-                sessionManager.setState(chatId, UserState.NORMAL);
-                sendMessage(chatId, "❌ Cancel kar diya!");
-                return;
-            }
-
-            // specific index
-            int index = Integer.parseInt(action);
-            sessionManager.setPendingIndex(chatId, index);
-
-            InlineKeyboardButton yes = new InlineKeyboardButton("✅ Haan Delete Karo");
-            yes.setCallbackData("reminder:delete:confirm");
-            InlineKeyboardButton no = new InlineKeyboardButton("❌ Cancel");
-            no.setCallbackData("reminder:delete:cancel");
-            sendInlineKeyboard(chatId, "🗑️ Confirm?", List.of(List.of(yes, no)));
             return;
         }
 
@@ -311,7 +506,45 @@ public class PersonalAssistantBot extends TelegramWebhookBot implements BotMessa
                 }
                 sendInlineKeyboard(chatId, "🗑️ Kaunsa expense delete karein?", rows);
             }
+        }
+    }
 
+    public void handleReminderCallback(Update update, String callbackData, Long chatId) {
+        if (callbackData.equals("reminder:delete:past")) {
+            String response = reminderService.deleteAllPastReminders(chatId);
+            sendMessage(chatId, response);
+            return;
+        }
+
+        // reminder:delete:<index>
+        if (callbackData.startsWith("reminder:delete:")) {
+            String action = callbackData.split(":")[2];
+
+            if (action.equals("confirm")) {
+                int index = sessionManager.getPendingIndex(chatId);
+                reminderService.deleteByIndex(index, chatId);
+                sessionManager.setState(chatId, UserState.NORMAL);
+                sendMessage(chatId, "🗑️ Reminder delete ho gaya!");
+                return;
+            }
+            if (action.equals("cancel")) {
+                sessionManager.setState(chatId, UserState.NORMAL);
+                sendMessage(chatId, "❌ Cancel kar diya!");
+                return;
+            }
+
+            // specific index
+            int index = Integer.parseInt(action);
+            sessionManager.setPendingIndex(chatId, index);
+
+            InlineKeyboardButton yes = new InlineKeyboardButton("✅ Haan Delete Karo");
+            yes.setCallbackData("reminder:delete:confirm");
+            InlineKeyboardButton no = new InlineKeyboardButton("❌ Cancel");
+            no.setCallbackData("reminder:delete:cancel");
+            sendInlineKeyboard(chatId, "🗑️ Confirm?", List.of(List.of(yes, no)));
+            return;
+        }
+        switch (callbackData) {
             case "reminder:add" -> sendMessage(chatId,
                     "⏰ Reminder batao!\n\nExample: kal subah 8 baje gym jaana hai");
 
@@ -325,7 +558,6 @@ public class PersonalAssistantBot extends TelegramWebhookBot implements BotMessa
                     sendMessage(chatId, "Koi reminder nahi abhi tak!");
                     return;
                 }
-
                 // har reminder pe delete button
                 List<List<InlineKeyboardButton>> rows = new ArrayList<>();
                 for (int i = 0; i < reminders.size(); i++) {
@@ -376,6 +608,7 @@ public class PersonalAssistantBot extends TelegramWebhookBot implements BotMessa
         KeyboardRow row3 = new KeyboardRow();
         row3.add("☁️ Weather");
         row3.add("📝 Summary");
+        row3.add("📰 News");
 
         rows.add(row1);
         rows.add(row2);

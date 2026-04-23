@@ -72,6 +72,20 @@ public class NewsService {
         return response.body();
     }
 
+    public String getTopNews() {
+        try {
+            // ✅ everything endpoint + broad query — free plan mein kaam karta hai
+            String url = "https://newsapi.org/v2/everything?q=india+news&sortBy=publishedAt&pageSize=10&apiKey="
+                    + apiKey;
+            String responseBody = callApi(url);
+            JsonObject root = JsonParser.parseString(responseBody).getAsJsonObject();
+            JsonArray articles = root.getAsJsonArray("articles");
+            return formatNews(articles);
+        } catch (Exception e) {
+            return "❌ Error fetching top news";
+        }
+    }
+
     private String formatNews(JsonArray articles) {
         StringBuilder result = new StringBuilder("📰 Top News:\n\n");
 

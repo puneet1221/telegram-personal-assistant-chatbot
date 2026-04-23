@@ -27,14 +27,13 @@ public class ExpenseDeleteHandler implements MessageHandler {
 
     @Override
     public String handle(Update update, String messageText) {
-        Long chatId = update.getMessage().getChatId(); // ✅ chatId
-
+        Long chatId = update.getMessage().getChatId();
         try {
             int index = sessionManager.getPendingIndex(chatId);
 
             boolean deleted = expenseService.deleteExpenseByIndex(index, chatId);
 
-            sessionManager.setState(chatId, UserState.NORMAL); // ✅ reset
+            sessionManager.setState(chatId, UserState.NORMAL);
 
             if (deleted) {
                 return "🗑️ Expense delete ho gaya!";

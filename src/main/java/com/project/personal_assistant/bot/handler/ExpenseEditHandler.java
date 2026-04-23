@@ -27,8 +27,7 @@ public class ExpenseEditHandler implements MessageHandler {
 
     @Override
     public String handle(Update update, String messageText) {
-        Long chatId = update.getMessage().getChatId(); // ✅ chatId
-
+        Long chatId = update.getMessage().getChatId(); 
         try {
             String[] parts = messageText.split(" ", 3);
             if (parts.length < 3) {
@@ -44,8 +43,7 @@ public class ExpenseEditHandler implements MessageHandler {
             boolean edited = expenseService.editExpensesByIndex(
                     index, amount, category, description, chatId);
 
-            sessionManager.setState(chatId, UserState.NORMAL); // ✅ reset
-
+            sessionManager.setState(chatId, UserState.NORMAL); 
             if (edited) {
                 return "✅ Expense update ho gaya!\n" +
                         "Amount: ₹" + amount + "\n" +

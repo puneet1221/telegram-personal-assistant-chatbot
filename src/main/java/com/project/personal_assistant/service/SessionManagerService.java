@@ -27,6 +27,8 @@ public class SessionManagerService {
         WAITING_FOR_FILE,
         WAITING_FOR_EDIT_EXPENSE,
         WAITING_FOR_DELETE_EXPENSE,
+        WAITING_FOR_ADD_HABIT,
+        WAITING_FOR_CITY,
         QNA_SESSION
     }
 
