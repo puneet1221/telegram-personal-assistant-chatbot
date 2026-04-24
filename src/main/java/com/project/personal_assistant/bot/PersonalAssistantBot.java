@@ -157,6 +157,10 @@ public class PersonalAssistantBot extends TelegramWebhookBot implements BotMessa
             sendNewsMenu(chatId);
             return null;
         }
+        if (messageText.equals("📄 DOC Q&A")) {
+            sendQnaMenu(chatId);
+            return null;
+        }
         sendMessage(chatId, "Samajh raha hoon...");
 
         // Handler dhundho — chatId bhi pass karo session check ke liye
@@ -171,8 +175,30 @@ public class PersonalAssistantBot extends TelegramWebhookBot implements BotMessa
             groqChatService.clearCache(messageText);
             sendMessage(chatId, response);
         }
-
+        if (messageText.equalsIgnoreCase("/done"))
+            sendMainMenu(chatId);
         return null;
+    }
+
+    private void handleQnACallback(Update update, String callbackData, Long chatId) {
+        switch (callbackData) {
+            case "qna:upload" -> {
+                sessionManager.setState(chatId, UserState.WAITING_FOR_FILE);
+                sendMessage(chatId,
+                        "📎 File upload karo!\n\n" +
+                                "Supported: PDF, TXT, DOCX\n\n" +
+                                "Upload ke baad seedha questions puchho.\n" +
+                                "/done — session khatam karo");
+            }
+        }
+    }
+
+    private void sendQnaMenu(long chatId) {
+        List<List<InlineKeyboardButton>> buttons = new ArrayList<>();
+        InlineKeyboardButton upload = new InlineKeyboardButton("📎 Upload File");
+        upload.setCallbackData("qna:upload");
+        buttons.add(List.of(upload));
+        sendInlineKeyboard(chatId, "📄 DOC Q&A — Document se baat karo!", buttons);
     }
 
     public void sendNewsMenu(Long chatId) {
@@ -281,6 +307,9 @@ public class PersonalAssistantBot extends TelegramWebhookBot implements BotMessa
         }
         if (data.startsWith("news:")) {
             handleNewsCallback(update, data, chatId);
+        }
+        if (data.startsWith("qna:")) {
+            handleQnACallback(update, data, chatId);
         }
     }
 
@@ -603,7 +632,7 @@ public class PersonalAssistantBot extends TelegramWebhookBot implements BotMessa
 
         KeyboardRow row2 = new KeyboardRow();
         row2.add("📅 Habits");
-        row2.add("📄 PDF Q&A");
+        row2.add("📄 DOC Q&A");
 
         KeyboardRow row3 = new KeyboardRow();
         row3.add("☁️ Weather");

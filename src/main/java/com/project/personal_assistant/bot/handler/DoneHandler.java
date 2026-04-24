@@ -28,7 +28,7 @@ public class DoneHandler implements MessageHandler {
 
     @Override
     public String handle(Update update, String messageText) {
-        long userId = update.getMessage().getFrom().getId();
+        long userId = update.getMessage().getChatId();
 
         log.info("Session clear ho raha hai — userId: {}", userId);
 
@@ -36,16 +36,7 @@ public class DoneHandler implements MessageHandler {
         // State bhi jaayegi, document ID bhi
         sessionManager.clearSession(userId);
 
-        return "✅ Session khatam ho gaya!\n\n" +
-                "Available commands:\n" +
-                "💰 expense — aaj 500 khane pe kharch kiye\n" +
-                "⏰ reminder — kal subah 8 baje gym\n" +
-                "📋 /expenses — sab expenses\n" +
-                "🔔 /reminders — sab reminders\n" +
-                "📄 /QNA:read-a-file — document Q&A\n" +
-                "📊 /today — aaj ke habits\n" +
-                "❓ /help — help";
+        return "✅ Session khatam ho gaya! Main menu se kuch aur choose karo 👇";
     }
 
-   
 }

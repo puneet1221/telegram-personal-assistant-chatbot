@@ -25,7 +25,7 @@ public class ExpensesListHandler implements MessageHandler {
 
     @Override
     public String handle(Update update, String messageText) {
-        Long chatId = update.getMessage().getChatId(); // ✅ chatId
+        Long chatId = update.getMessage().getChatId(); 
 
         List<Expense> expenses = expenseService.getAllExpenses(chatId);
         if (expenses.isEmpty())

@@ -37,7 +37,6 @@ public class QnAQuestionHandler implements MessageHandler {
     @Override
     public String handle(Update update, String messageText) {
         long chatId = update.getMessage().getChatId();
-        long userId = update.getMessage().getFrom().getId();
 
         // Session check karo — agar QNA_SESSION nahi hai toh handle mat karo
         if (sessionManager.getState(chatId) != SessionManagerService.UserState.QNA_SESSION) {
@@ -50,17 +49,20 @@ public class QnAQuestionHandler implements MessageHandler {
         try {
             // RAGService se answer lo
             // Ye tera existing askQuestion() method hai
-            String answer = ragService.askQuestion(messageText, userId);
+            String answer = ragService.askQuestion(messageText, chatId);
 
-            return "🤖 " + answer + "\n\n" +
-                    "_Session active hai — aur questions puchho_\n" +
-                    "_/done — session khatam karo_";
+            return "🤖 *Dogesh says:*\n\n" +
+                    answer + "\n\n" +
+                    "────────────────────\n" +
+                    "💬 _Session active hai — aur sawal pucho!_\n" +
+                    "🛑 /done — *Session khatam karein*";
 
         } catch (Exception e) {
             log.error("QNA question error — chatId: {}", chatId, e);
-            return "❌ Answer nahi mila, dobara try karo!"
-                    + "\n\n"
-                    + "/done - to terminate this session";
+            return "⚠️ *Ouch! Kuch gadbad ho gayi.*\n\n" +
+                    "Main abhi jawab nahi nikal pa raha hoon. Ek baar phir try karo ya session end kar do.\n\n" +
+                    "👉 /done — *Terminate session*";
+
         }
     }
 }
