@@ -21,5 +21,7 @@ public class Reminder {
     private String frequency;
     private String dayOfWeek;
     private String timeOfDay;
+    private String dayOfMonth;
+    private String month;
     private String cronExpression;
 }

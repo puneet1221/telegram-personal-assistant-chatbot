@@ -15,24 +15,60 @@ import lombok.extern.slf4j.Slf4j;
 @Order(8)
 @RequiredArgsConstructor
 public class UnknownHandler implements MessageHandler {
- private final GroqChatService groqChatService;
+
+    private final GroqChatService groqChatService;
+
     @Override
-    public boolean canHandle(String messageText,Long chatId) {
-        log.info("unknown handler invoked");
+    public boolean canHandle(String messageText, Long chatId) {
+        log.info("UnknownHandler invoked for: {}", messageText);
         return true;
     }
 
     @Override
     public String handle(Update update, String messageText) {
-        JsonObject object=groqChatService.parseUserMessage(messageText);
-        String response=object.get("reply")+"""
-        /n/n
-        /start ->To get started
-        /help 
-        /habit
-                
-                """;
-        log.info(object.toString());
-        return response;
+        String lower = messageText.toLowerCase();
+
+        // ✅ Feature related — guide karo
+        if (lower.contains("expense") || lower.contains("kharcha")) {
+            return "💰 Expense Manager:\n\n" +
+                    "➕ Add: 'aaj 500 khane pe kharch kiya'\n" +
+                    "📋 View/Edit/Delete: '💰 Expenses' menu se";
+        }
+
+        if (lower.contains("reminder") || lower.contains("yaad")) {
+            return "⏰ Reminder Manager:\n\n" +
+                    "➕ Add: 'kal subah 8 baje gym'\n" +
+                    "📋 View/Delete: '⏰ Reminders' menu se";
+        }
+
+        if (lower.contains("habit")) {
+            return "📅 Habit Tracker:\n\n" +
+                    "'📅 Habits' menu se manage karo";
+        }
+
+        if (lower.contains("weather") || lower.contains("mausam")) {
+            return "☁️ Weather:\n\n" +
+                    "'☁️ Weather' menu se city enter karo";
+        }
+
+        if (lower.contains("news")) {
+            return "📰 News:\n\n" +
+                    "'📰 News' menu se category choose karo";
+        }
+
+        if (lower.contains("pdf") || lower.contains("document") || lower.contains("file")) {
+            return "📄 DOC Q&A:\n\n" +
+                    "'📄 DOC Q&A' menu se file upload karo";
+        }
+
+        try {
+            JsonObject object = groqChatService.parseUserMessage(messageText);
+            String reply = object.get("reply").getAsString(); // ✅ getAsString — quotes nahi aayenge
+            log.info("Groq reply: {}", reply);
+            return reply;
+        } catch (Exception e) {
+            log.error("Groq error: {}", e.getMessage());
+            return "❌ Samajh nahi aaya! Main menu se choose karo 👇";
+        }
     }
 }

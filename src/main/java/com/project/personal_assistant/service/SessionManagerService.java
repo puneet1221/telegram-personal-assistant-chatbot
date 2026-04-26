@@ -29,6 +29,7 @@ public class SessionManagerService {
         WAITING_FOR_DELETE_EXPENSE,
         WAITING_FOR_ADD_HABIT,
         WAITING_FOR_CITY,
+        WAITING_FOR_ADD_REMINDER,
         QNA_SESSION
     }
 

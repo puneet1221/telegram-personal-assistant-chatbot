@@ -87,6 +87,26 @@ public class PersonalAssistantBot extends TelegramWebhookBot implements BotMessa
 
     @Override
     public BotApiMethod<?> onWebhookUpdateReceived(Update update) {
+        try {
+            return processUpdate(update);
+        } catch (Exception e) {
+            log.error("Unexpected error processing update: ", e);
+            try {
+                if (update.hasMessage()) {
+                    sendMessage(update.getMessage().getChatId(),
+                            "❌ Kuch galat hua! Dobara try karo.");
+                } else if (update.hasCallbackQuery()) {
+                    sendMessage(update.getCallbackQuery().getMessage().getChatId(),
+                            "❌ Kuch galat hua! Dobara try karo.");
+                }
+            } catch (Exception ex) {
+                log.error("Error sending error message: ", ex);
+            }
+            return null;
+        }
+    }
+
+    private BotApiMethod<?> processUpdate(Update update) {
         if (update.hasCallbackQuery()) {
             log.info("call back query received");
             handleCallback(update);
@@ -287,29 +307,39 @@ public class PersonalAssistantBot extends TelegramWebhookBot implements BotMessa
 
     // central router for handling callbacks
     private void handleCallback(Update update) {
-        String data = update.getCallbackQuery().getData();
-        long chatId = update.getCallbackQuery().getMessage().getChatId();
+        try {
+            String data = update.getCallbackQuery().getData();
+            long chatId = update.getCallbackQuery().getMessage().getChatId();
 
-        if (data.startsWith("expense:")) {
-            handleExpenseCallback(update, data, chatId);
-            return;
-        }
-        if (data.startsWith("reminder:")) {
-            handleReminderCallback(update, data, chatId);
-            return;
-        }
-        if (data.startsWith("habit:")) {
-            handleHabitCallback(update, data, chatId);
-            return;
-        }
-        if (data.startsWith("weather:")) {
-            handleWeatherCallback(update, data, chatId);
-        }
-        if (data.startsWith("news:")) {
-            handleNewsCallback(update, data, chatId);
-        }
-        if (data.startsWith("qna:")) {
-            handleQnACallback(update, data, chatId);
+            if (data.startsWith("expense:")) {
+                handleExpenseCallback(update, data, chatId);
+                return;
+            }
+            if (data.startsWith("reminder:")) {
+                handleReminderCallback(update, data, chatId);
+                return;
+            }
+            if (data.startsWith("habit:")) {
+                handleHabitCallback(update, data, chatId);
+                return;
+            }
+            if (data.startsWith("weather:")) {
+                handleWeatherCallback(update, data, chatId);
+            }
+            if (data.startsWith("news:")) {
+                handleNewsCallback(update, data, chatId);
+            }
+            if (data.startsWith("qna:")) {
+                handleQnACallback(update, data, chatId);
+            }
+        } catch (Exception e) {
+            log.error("Callback handling error: ", e);
+            try {
+                long chatId = update.getCallbackQuery().getMessage().getChatId();
+                sendMessage(chatId, "❌ Kuch galat hua! Dobara try karo.");
+            } catch (Exception ex) {
+                log.error("Error sending callback error message: ", ex);
+            }
         }
     }
 
@@ -574,8 +604,11 @@ public class PersonalAssistantBot extends TelegramWebhookBot implements BotMessa
             return;
         }
         switch (callbackData) {
-            case "reminder:add" -> sendMessage(chatId,
-                    "⏰ Reminder batao!\n\nExample: kal subah 8 baje gym jaana hai");
+            case "reminder:add" -> {
+                sessionManager.setState(chatId, UserState.WAITING_FOR_ADD_REMINDER);
+                sendMessage(chatId,
+                        "⏰ Reminder batao!\n\nExample: kal subah 8 baje gym jaana hai");
+            }
 
             case "reminder:view" -> {
                 Message message = update.getCallbackQuery().getMessage();

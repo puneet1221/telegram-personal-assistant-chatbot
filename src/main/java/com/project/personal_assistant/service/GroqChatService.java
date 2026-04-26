@@ -28,28 +28,30 @@ public class GroqChatService {
     private final Map<String, JsonObject> cache = new ConcurrentHashMap<>();
 
     private static final String SYSTEM_PROMPT = """
-            Tu ek personal assistant hai. User ka message parse karke SIRF JSON return kar.
-            Koi extra text nahi, sirf JSON.
+                        Tu ek personal assistant hai. User ka message parse karke SIRF JSON return kar.
+                        Koi extra text nahi, sirf JSON.
 
-            Agar normal expense hai toh:
-            {"type": "expense", "amount": 500, "category": "food", "description": "lunch"}
+                        Agar normal expense hai toh:
+                        {"type": "expense", "amount": 500, "category": "food", "description": "lunch"}
 
-            Agar normal reminder hai toh:
-            {"type": "reminder", "datetime": "2026-04-02T08:00:00", "message": "gym jaana hai"}
+                        Agar normal reminder hai toh:
+                        {"type": "reminder", "datetime": "2026-04-02T08:00:00", "message": "gym jaana hai"}
 
-            Agar recurring reminder hai toh:
-            Daily: {"type": "recurring_reminder", "frequency": "daily", "time": "07:00", "message": "gym jaana hai"}
-            Weekly: {"type": "recurring_reminder", "frequency": "weekly", "day": "MONDAY", "time": "09:00", "message": "meeting hai"}
+                        Agar recurring reminder hai toh:
+                        Daily: {"type": "recurring_reminder", "frequency": "daily", "time": "07:00", "message": "gym jaana hai"}
+                        Weekly: {"type": "recurring_reminder", "frequency": "weekly", "day": "MONDAY", "time": "09:00", "message": "meeting hai"}
+                        Monthly: {"type": "recurring_reminder", "frequency": "monthly", "day": "15", "time": "09:00", "message": "rent bharna hai"}
+                        Yearly: {"type": "recurring_reminder", "frequency": "yearly", "month": "JANUARY", "day": "1", "time": "09:00", "message": "xyz task karna h"}
+                        
+                         Agar koi habit user ne complete kiya hai toh:
+                        {"type": "habit_done", "habit": "gym"}
 
-            Agar koi habit user ne complete kiya hai toh:
-            {"type": "habit_done", "habit": "gym"}
+                        Agar kuch aur hai toh:
+                        {"type": "unknown", "reply": "yahan reply likho"}
 
-            Agar kuch aur hai toh:
-            {"type": "unknown", "reply": "yahan reply likho"}
-
-            Categories expense ke liye: food, transport, shopping, health, entertainment, other
-            Datetime ISO format: yyyy-MM-ddTHH:mm:ss
-            Aaj ki date: """
+                        Categories expense ke liye: food, transport, shopping, health, entertainment, other
+                        Datetime ISO format: yyyy-MM-ddTHH:mm:ss
+                        Aaj ki date: """
             + java.time.LocalDate.now();
 
     /**
@@ -100,7 +102,7 @@ public class GroqChatService {
                 log.error("Groq API error: {} - {}", response.statusCode(), response.body());
                 return createFallbackResponse("API Error aaya bhai, thoda wait kar.");
             }
-           
+
             return extractJsonFromResponse(response.body());
 
         } catch (Exception e) {
@@ -121,7 +123,7 @@ public class GroqChatService {
 
             // Cleaning markdown backticks if Groq adds them
             content = content.replaceAll("```json", "").replaceAll("```", "").trim();
-             log.info(content);
+            log.info(content);
             return gson.fromJson(content, JsonObject.class);
         } catch (Exception e) {
             log.error("JSON Extraction failed from Groq response", e);
