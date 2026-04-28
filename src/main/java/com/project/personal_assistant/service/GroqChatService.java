@@ -4,12 +4,13 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -25,33 +26,36 @@ public class GroqChatService {
     private String model;
     private String GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
     private HttpClient httpClient = HttpClient.newHttpClient();
-    private final Map<String, JsonObject> cache = new ConcurrentHashMap<>();
+    private final Cache<String, JsonObject> cache = Caffeine.newBuilder()
+            .maximumSize(1000) // 1000 se zyada entries hone par purani wali delete ho jayengi
+            .expireAfterWrite(15, TimeUnit.MINUTES) // Response 15 min baad auto-expire ho jayega
+            .build();
 
     private static final String SYSTEM_PROMPT = """
-                        Tu ek personal assistant hai. User ka message parse karke SIRF JSON return kar.
-                        Koi extra text nahi, sirf JSON.
+            Tu ek personal assistant hai. User ka message parse karke SIRF JSON return kar.
+            Koi extra text nahi, sirf JSON.
 
-                        Agar normal expense hai toh:
-                        {"type": "expense", "amount": 500, "category": "food", "description": "lunch"}
+            Agar normal expense hai toh:
+            {"type": "expense", "amount": 500, "category": "food", "description": "lunch"}
 
-                        Agar normal reminder hai toh:
-                        {"type": "reminder", "datetime": "2026-04-02T08:00:00", "message": "gym jaana hai"}
+            Agar normal reminder hai toh:
+            {"type": "reminder", "datetime": "2026-04-02T08:00:00", "message": "gym jaana hai"}
 
-                        Agar recurring reminder hai toh:
-                        Daily: {"type": "recurring_reminder", "frequency": "daily", "time": "07:00", "message": "gym jaana hai"}
-                        Weekly: {"type": "recurring_reminder", "frequency": "weekly", "day": "MONDAY", "time": "09:00", "message": "meeting hai"}
-                        Monthly: {"type": "recurring_reminder", "frequency": "monthly", "day": "15", "time": "09:00", "message": "rent bharna hai"}
-                        Yearly: {"type": "recurring_reminder", "frequency": "yearly", "month": "JANUARY", "day": "1", "time": "09:00", "message": "xyz task karna h"}
-                        
-                         Agar koi habit user ne complete kiya hai toh:
-                        {"type": "habit_done", "habit": "gym"}
+            Agar recurring reminder hai toh:
+            Daily: {"type": "recurring_reminder", "frequency": "daily", "time": "07:00", "message": "gym jaana hai"}
+            Weekly: {"type": "recurring_reminder", "frequency": "weekly", "day": "MONDAY", "time": "09:00", "message": "meeting hai"}
+            Monthly: {"type": "recurring_reminder", "frequency": "monthly", "day": "15", "time": "09:00", "message": "rent bharna hai"}
+            Yearly: {"type": "recurring_reminder", "frequency": "yearly", "month": "JANUARY", "day": "1", "time": "09:00", "message": "xyz task karna h"}
 
-                        Agar kuch aur hai toh:
-                        {"type": "unknown", "reply": "yahan reply likho"}
+             Agar koi habit user ne complete kiya hai toh:
+            {"type": "habit_done", "habit": "gym"}
 
-                        Categories expense ke liye: food, transport, shopping, health, entertainment, other
-                        Datetime ISO format: yyyy-MM-ddTHH:mm:ss
-                        Aaj ki date: """
+            Agar kuch aur hai toh:
+            {"type": "unknown", "reply": "yahan reply likho"}
+
+            Categories expense ke liye: food, transport, shopping, health, entertainment, other
+            Datetime ISO format: yyyy-MM-ddTHH:mm:ss
+            Aaj ki date: """
             + java.time.LocalDate.now();
 
     /**
@@ -64,12 +68,7 @@ public class GroqChatService {
      */
 
     public JsonObject parseUserMessage(String userMessage) {
-        return cache.computeIfAbsent(userMessage, this::callGroqAndParse);
-    }
-
-    public void clearCache(String userMessage) {
-        cache.remove(userMessage);
-        log.debug("Cache cleared for: {}", userMessage);
+        return cache.get(userMessage, (msg) -> callGroqAndParse(msg));
     }
 
     private JsonObject callGroqAndParse(String userMessage) {

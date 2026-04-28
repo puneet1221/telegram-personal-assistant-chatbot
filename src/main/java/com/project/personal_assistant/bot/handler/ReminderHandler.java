@@ -12,7 +12,6 @@ import com.project.personal_assistant.model.Reminder;
 import com.project.personal_assistant.service.GroqChatService;
 import com.project.personal_assistant.service.QuartzService;
 import com.project.personal_assistant.service.ReminderService;
-import com.project.personal_assistant.service.SessionManagerService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class ReminderHandler implements MessageHandler {
 
-    private final SessionManagerService sessionManagerService;
     private final ReminderService reminderService;
     private final QuartzService quartzService;
     private final GroqChatService chatService;

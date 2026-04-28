@@ -78,7 +78,29 @@
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
 		</dependency>
+
+			<!--
+			Instead of concurrent HashMap to implment caching of Groq Responses
+			we'll use Caffience cache. 
+		    why? manual cleanup not needed after sometime atupo clean up.
+			in case there is exception there is possibility that clenaup wont be performed that's why
+			-->
+			<dependency>
+    <groupId>com.github.ben-manes.caffeine</groupId>
+    <artifactId>caffeine</artifactId>
+    <version>3.1.8</version> </dependency>
+
+	<!--
+	Bucket4j for Rate Limiting
+	-->
 		<dependency>
+		<groupId>com.bucket4j</groupId>
+		<artifactId>bucket4j-core</artifactId>
+		<version>8.10.1</version>
+		</dependency>
+
+
+			<dependency>
 			<groupId>org.telegram</groupId>
 			<artifactId>telegrambots-spring-boot-starter</artifactId>
 			<version>6.8.0</version>

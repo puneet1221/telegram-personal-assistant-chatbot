@@ -86,6 +86,22 @@ public class ReminderService {
                 chatId, start, end);
     }
 
+
+/*
+Cron Expression Builder
+
+* * * * * *
+| | | | | |
+| | | | | └ Day of week(1-7)
+| | | | └── Month (1-12)
+| | | └──── Day of month (1-31)
+| | └────── Hour
+| └──────── Minute
+└────────── Seconds
+
+
+*/
+
     public String buildCronExpression(String frequency, String time,
             String dayOfWeek, String dayOfMonth,
             String month) {

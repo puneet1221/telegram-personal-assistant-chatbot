@@ -87,6 +87,7 @@ public class PersonalAssistantBot extends TelegramWebhookBot implements BotMessa
 
     @Override
     public BotApiMethod<?> onWebhookUpdateReceived(Update update) {
+
         try {
             return processUpdate(update);
         } catch (Exception e) {
@@ -107,6 +108,8 @@ public class PersonalAssistantBot extends TelegramWebhookBot implements BotMessa
     }
 
     private BotApiMethod<?> processUpdate(Update update) {
+        long chatId = update.getMessage().getChatId();
+        sendAction(ActionType.TYPING, chatId);
         if (update.hasCallbackQuery()) {
             log.info("call back query received");
             handleCallback(update);
@@ -115,7 +118,7 @@ public class PersonalAssistantBot extends TelegramWebhookBot implements BotMessa
 
         if (!update.hasMessage())
             return null;
-        long chatId = update.getMessage().getChatId();
+
         if (update.getMessage().hasPhoto() || update.getMessage().hasVoice() || update.getMessage().hasAudio()) {
             String name = update.getMessage().getFrom().getFirstName();
             sendMessage(chatId,
@@ -192,9 +195,9 @@ public class PersonalAssistantBot extends TelegramWebhookBot implements BotMessa
 
         // Null response — kisi handler ne handle nahi kiya
         if (response != null) {
-            groqChatService.clearCache(messageText);
             sendMessage(chatId, response);
         }
+
         if (messageText.equalsIgnoreCase("/done"))
             sendMainMenu(chatId);
         return null;
