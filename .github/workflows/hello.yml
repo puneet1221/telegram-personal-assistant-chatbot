@@ -1,0 +1,7 @@
+name: hello world pipeline
+on: push
+jobs:
+  runs-on: ubuntu-latest
+  steps:
+    - name: Print Message
+      run: echo "Hello Puneet Pipeline created"

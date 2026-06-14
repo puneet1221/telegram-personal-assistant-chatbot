@@ -35,7 +35,7 @@ public class ExpenseService {
     }
 
     public boolean deleteExpenseByIndex(int index, Long chatId) {
-        List<Expense> expenses = expenseRepository.findIdsByChatId(chatId); // ✅ sirf IDs
+        List<Expense> expenses = expenseRepository.findIdsByChatId(chatId); 
         if (index < 0 || index >= expenses.size())
             return false;
         expenseRepository.deleteById(expenses.get(index).getId());

@@ -1,0 +1,95 @@
+services:
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: personal-assistant-ngrok
+    command: ["http", "app:8080"]  #creating the tunnel
+    ports:
+      - "4040:4040"
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+    networks:
+      - assistant-network
+    restart: unless-stopped
+
+  # Ollama Service (Local LLM & Embeddings)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: personal-assistant-ollama
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - assistant-network
+    restart: unless-stopped
+    # Note: Pull required models after container starts
+    # Run: docker exec personal-assistant-ollama ollama pull nomic-embed-text
+
+  # Spring Boot Application Service
+  app:
+    build:
+      context: .
+      dockerfile: DockerFile
+    container_name: personal-assistant-bot
+    depends_on:
+      - ollama
+      - ngrok
+    environment:
+      # Database Configuration (MongoDB Atlas)
+      dburl: ${dburl}
+      
+      # Telegram Configuration
+      token: ${token}
+      
+      # API Keys
+      weatherApiKey: ${weatherApiKey}
+      newsApiKey: ${newsApiKey}
+      groqApiKey: ${groqApiKey}
+      
+      # Webhook Configuration
+      webHookUrl: ${webHookUrl}
+      
+      # Ollama Configuration (updated for Docker network)
+      SPRING_AI_OLLAMA_BASE_URL: http://ollama:11434
+      SPRING_AI_OLLAMA_EMBEDDING_OPTIONS_MODEL: nomic-embed-text
+      
+      # MongoDB Vector Store Configuration
+      SPRING_AI_VECTORSTORE_MONGODB_COLLECTION_NAME: vector_store
+      SPRING_AI_VECTORSTORE_MONGODB_VECTOR_INDEX_NAME: vector_index
+      SPRING_AI_VECTORSTORE_MONGODB_INITIALIZE_SCHEMA: "false"
+      
+      # Spring Configurations
+      SPRING_QUARTZ_JOB_STORE_TYPE: memory
+      SPRING_QUARTZ_AUTO_STARTUP: "true"
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK: WARN
+      LOGGING_LEVEL_COM_PERSONALASSISTANT: DEBUG
+      LOGGING_LEVEL_ORG_TELEGRAM: WARN
+      LOGGING_LEVEL_ORG_MONGODB: WARN
+      LOGGING_LEVEL_ORG_QUARTZ: WARN
+      LOGGING_LEVEL_ORG_APACHE: WARN
+      
+      SERVER_PORT: 8080
+    ports:
+      - "8080:8080"
+    networks:
+      - assistant-network
+    restart: unless-stopped
+    # Optional: Add resource limits
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '2'
+    #       memory: 2G
+    #     reservations:
+    #       cpus: '1'
+    #       memory: 1G
+
+volumes:
+  ollama_data:
+    driver: local
+
+networks:
+  assistant-network:
+    driver: bridge

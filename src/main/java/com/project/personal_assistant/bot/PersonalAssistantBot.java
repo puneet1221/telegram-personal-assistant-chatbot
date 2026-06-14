@@ -29,6 +29,7 @@ import com.project.personal_assistant.service.ExpenseService;
 import com.project.personal_assistant.service.GroqChatService;
 import com.project.personal_assistant.service.HabitService;
 import com.project.personal_assistant.service.NewsService;
+import com.project.personal_assistant.service.RateLimiterService;
 import com.project.personal_assistant.service.ReminderService;
 import com.project.personal_assistant.service.SessionManagerService;
 import com.project.personal_assistant.service.SessionManagerService.UserState;
@@ -40,7 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class PersonalAssistantBot extends TelegramWebhookBot implements BotMessageService {
     private final List<MessageHandler> handlers;
-    private final GroqChatService groqChatService;
+    private final RateLimiterService rateLimiterService;
     private final UserService userService;
     private final SessionManagerService sessionManager;
     private final ExpenseService expenseService;
@@ -57,22 +58,22 @@ public class PersonalAssistantBot extends TelegramWebhookBot implements BotMessa
     public PersonalAssistantBot(
             NewsService newsService,
             List<MessageHandler> handlers,
-            GroqChatService groqChatService,
             ReminderService reminderService,
             UserService userService,
             SessionManagerService sessionManager,
             HabitService habitService,
             ExpenseService expenseService,
+            RateLimiterService rateLimiterservice,
             @Value("${telegram.bot.token}") String botToken) {
         super(botToken);
         this.handlers = handlers;
-        this.groqChatService = groqChatService;
         this.userService = userService;
         this.sessionManager = sessionManager;
         this.expenseService = expenseService;
         this.reminderService = reminderService;
         this.habitService = habitService;
         this.newsService = newsService;
+        this.rateLimiterService = rateLimiterservice;
     }
 
     @Override
@@ -109,6 +110,13 @@ public class PersonalAssistantBot extends TelegramWebhookBot implements BotMessa
 
     private BotApiMethod<?> processUpdate(Update update) {
         long chatId = update.getMessage().getChatId();
+        if (!rateLimiterService.isAllowed(chatId)) {
+            sendMessage(chatId, """
+                    I am overloaded !
+                     Please try after sometime ;
+                    """);
+            return null;
+        }
         sendAction(ActionType.TYPING, chatId);
         if (update.hasCallbackQuery()) {
             log.info("call back query received");
